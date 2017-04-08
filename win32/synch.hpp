@@ -47,6 +47,9 @@ namespace Windows
     class Locker
     {
       T &_ref;
+
+      Locker(const Locker &);
+      Locker &operator=(const Locker &);
   
     public:
       explicit Locker(T &ref) : _ref(ref) { _ref.lock(); }

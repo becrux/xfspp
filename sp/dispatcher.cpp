@@ -94,7 +94,10 @@ Dispatcher::Dispatcher() :
         if (tH)
           tH->run();
       }
+    #pragma warning(push)
+    #pragma warning(disable : 4127)
       while (true);
+    #pragma warning(pop)
     })
 {
   ::Log::Method(__FUNCSIG__);

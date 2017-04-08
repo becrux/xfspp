@@ -4,14 +4,14 @@
 #include "sp/dispatcher.hpp"
 #include "log/log.hpp"
 
-int main(int argc, char **argv)
+int main(int, char **)
 {
   Dispatcher d;
       
   for (DWORD i = 0; i < 10; ++i)
     d.post(i,2000,std::make_shared< LambdaTask >(
       i,
-      [i] (DWORD id)
+      [i] (DWORD)
         {
           Log::Logger() << "RUNNING " << i;
           Sleep((i + 1) * 1000);
