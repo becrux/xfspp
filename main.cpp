@@ -1,11 +1,5 @@
-#include <iostream>
-#include <fstream>
-
 #include <windows.h>
 
-#include "win32/synch.hpp"
-#include "win32/thread.hpp"
-#include "win32/timer.hpp"
 #include "sp/task.hpp"
 #include "sp/dispatcher.hpp"
 #include "log/log.hpp"

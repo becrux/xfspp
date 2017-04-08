@@ -19,11 +19,8 @@ Dispatcher::TaskHelper::TaskHelper(DWORD id,
       {
         ::Log::Method m(__LAMBDA_FUNCSIG__("TaskHelper::Timer"),LOG_STRING("id = " << _id));
 
-        ::Log::Logger() << "Timer HHHH1" << _id;
         _completionEventCallback(CompletionEvent::Timeout,_id);
-        ::Log::Logger() << "Timer HHHH2" << _id;
         _sem.unlock();
-        ::Log::Logger() << "Timer HHHH3" << _id;
         _taskRef->timeoutF();
      })
 {
