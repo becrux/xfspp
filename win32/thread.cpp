@@ -1,31 +1,43 @@
 #include "win32/thread.hpp"
+#include "log/log.hpp"
 
 using namespace Windows;
 
 Thread::Thread(std::function< void () > f) :
-  _startSem(0,1),
-  _f(f),
-  Handle()
+  Handle(),
+  _joined(false),
+  _f(f)
 {
-  setHandle(CreateThread(NULL,0,threadProc,reinterpret_cast< LPVOID >(this),0,NULL));
+  ::Log::Method m(__FUNCSIG__);
 
-  _startSem.lock();
+  setHandle(CreateThread(NULL,0,threadProc,reinterpret_cast< LPVOID >(this),0,NULL));
 }
 
 Thread::~Thread()
 {
+  ::Log::Method m(__FUNCSIG__);
+
+  join();
+}
+
+void Thread::join()
+{
+  ::Log::Method m(__FUNCSIG__);
+
+  if (_joined)
+    return;
+
   if (handle())
     WaitForSingleObjectEx(handle(),INFINITE,FALSE);
+
+  _joined = true;
 }
 
 DWORD WINAPI Thread::threadProc(LPVOID lpParameter)
 {
-  Thread *me = reinterpret_cast< Thread * >(lpParameter);
+  ::Log::Method m(__FUNCSIG__);
 
-  std::function< void () > f = me->_f;
-  me->_startSem.unlock();
-
-  f();
+  reinterpret_cast< Thread * >(lpParameter)->_f();
 
   return 0;
 }

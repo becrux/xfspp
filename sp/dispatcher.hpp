@@ -5,6 +5,7 @@
 #include <memory>
 #include <map>
 #include <list>
+#include <set>
 
 #include <windows.h>
 
@@ -13,19 +14,19 @@
 #include "win32/thread.hpp"
 #include "win32/timer.hpp"
 
-class Dispatcher : public std::enable_shared_from_this< Dispatcher >
+class Dispatcher
 {
   class TaskHelper
   {
   public:
-    enum class CompletionState { Timeout, Cancelled, TimeoutWhileRunning, CancelledWhileRunning, Completed };
+    enum class CompletionEvent { Timeout, Cancelled, Completed };
 
   private:
     DWORD _id;
     DWORD _timeout;
     Windows::Synch::Semaphore _sem;
     std::shared_ptr< ITask > _taskRef;
-    std::function< void (CompletionState, DWORD) > _stateChange;
+    std::function< void (CompletionEvent, DWORD) > _completionEventCallback;
     Windows::Timer _timer;
     std::unique_ptr< Windows::Thread > _thread;
 
@@ -33,9 +34,8 @@ class Dispatcher : public std::enable_shared_from_this< Dispatcher >
     explicit TaskHelper(DWORD id,
                         DWORD timeout,
                         const std::shared_ptr< ITask > &taskRef,
-                        std::function< void (CompletionState, DWORD) > stateChange);
-
-    std::shared_ptr< ITask > taskRef() const { return _taskRef; }
+                        std::function< void (CompletionEvent, DWORD) > completionEventCallback);
+    ~TaskHelper();
 
     DWORD id() const { return _id; }
 
@@ -45,22 +45,23 @@ class Dispatcher : public std::enable_shared_from_this< Dispatcher >
   };
 
   bool _closing;
+  Windows::Synch::Semaphore _closingSem;
   Windows::Synch::Mutex _mutex;
   std::list< DWORD > _queueList;
-  std::map< DWORD,std::shared_ptr< TaskHelper > > _notQueuedTasks;
+  std::set< DWORD > _runningTasks;
   std::map< DWORD,std::shared_ptr< TaskHelper > > _queuedTasks;
+  std::map< DWORD,std::shared_ptr< TaskHelper > > _notQueuedTasks;
   Windows::Synch::Semaphore _queueSem;
   Windows::Thread _queueThread;
 
-  explicit Dispatcher();
-
 public:
+  explicit Dispatcher();
   ~Dispatcher();
 
   void post(DWORD id, DWORD timeout, const std::shared_ptr< ITask > &task);
   bool cancel(DWORD id);
 
-  static std::shared_ptr< Dispatcher > create();
+  friend std::ostream &operator<<(std::ostream &out, TaskHelper::CompletionEvent state);
 };
 
 #endif

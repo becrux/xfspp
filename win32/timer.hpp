@@ -2,7 +2,6 @@
 #ifndef __TIMER_HPP__
 #define __TIMER_HPP__
 
-#include <memory>
 #include <functional>
 
 #include "win32/synch.hpp"

@@ -36,7 +36,7 @@ void Semaphore::unlock()
 }
 
 Event::Event() :
-  Handle(CreateEvent(NULL,FALSE,FALSE,NULL))
+  Handle(CreateEvent(NULL,TRUE,FALSE,NULL))
 {
 
 }

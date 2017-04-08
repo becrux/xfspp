@@ -1,30 +1,28 @@
-#include <iostream>
-
 #include "sp/task.hpp"
+#include "log/log.hpp"
 
 LambdaTask::LambdaTask(DWORD i, std::function< void (DWORD) > f) : _i(i), _f(f)
 {
-  std::cout << "LambdaTask::LambdaTask " << _i << std::endl;
+  ::Log::Method(__FUNCSIG__,LOG_STRING("i = " << i));
 }
 
 LambdaTask::~LambdaTask()
 {
-  std::cout << "LambdaTask::~LambdaTask " << _i << std::endl;
+  ::Log::Method(__FUNCSIG__,LOG_STRING("i = " << _i));
 }
 
 void LambdaTask::operator()(DWORD id)
 {
-  std::cout << "LambdaTask::operator() " << _i << " begin" << std::endl;
+  ::Log::Method m(__FUNCSIG__,LOG_STRING("id = " << id));
   _f(id);
-  std::cout << "LambdaTask::operator() " << _i << " end" << std::endl;
 }
 
 void LambdaTask::timeoutF()
 {
-  std::cout << "LambdaTask::timeoutF() " << _i << std::endl;
+  ::Log::Method(__FUNCSIG__,LOG_STRING("i = " << _i));
 }
 
 void LambdaTask::cancelF()
 {
-  std::cout << "LambdaTask::cancelF() " << _i << std::endl;
+  ::Log::Method(__FUNCSIG__,LOG_STRING("i = " << _i));
 }

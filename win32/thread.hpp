@@ -3,16 +3,14 @@
 #define __THREAD_HPP__
 
 #include <functional>
-#include <memory>
 
 #include "win32/handle.hpp"
-#include "win32/synch.hpp"
 
 namespace Windows
 {
   class Thread : public Handle
   {
-    Synch::Semaphore _startSem;
+    bool _joined;
     std::function< void () > _f;
 
     static DWORD WINAPI threadProc(LPVOID lpParameter);
@@ -20,6 +18,8 @@ namespace Windows
   public:
     explicit Thread(std::function< void () > f);
     ~Thread();
+
+    void join();
   };
 }
 
