@@ -1,3 +1,11 @@
+/* win32/timer.cpp
+ *
+ * Copyright (C) 2007 Antonio Di Monaco
+ *
+ * This software may be modified and distributed under the terms
+ * of the MIT license.  See the LICENSE file for details.
+ */
+
 #include "win32/timer.hpp"
 #include "log/log.hpp"
 
