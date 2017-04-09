@@ -9,7 +9,7 @@
 
 namespace Windows
 {
-  class Timer
+  class Timer : public Handle<>
   {
     std::function< void () > _f;
     Synch::Event _cancelEvent;

@@ -13,8 +13,8 @@ namespace Windows
 {
   class MsgWnd
   {
-    MsgWnd(const Handle &o);
-    MsgWnd &operator=(const Handle &o);
+    MsgWnd(const MsgWnd &o);
+    MsgWnd &operator=(const MsgWnd &o);
 
     bool _closing;
     HINSTANCE _hInstance;

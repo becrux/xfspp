@@ -8,7 +8,7 @@
 
 namespace Windows
 {
-  class Thread : public Handle
+  class Thread : public Handle<>
   {
     bool _joined;
     std::function< void () > _f;

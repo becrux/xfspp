@@ -1,0 +1,14 @@
+LIBRARY test_sp
+EXPORTS
+  DllMain
+  WFPCancelAsyncRequest
+  WFPClose
+  WFPDeregister
+  WFPExecute
+  WFPGetInfo
+  WFPLock
+  WFPOpen
+  WFPRegister
+  WFPSetTraceLevel
+  WFPUnloadService
+  WFPUnlock

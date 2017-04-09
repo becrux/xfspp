@@ -10,7 +10,7 @@ namespace Windows
 {
   namespace Synch
   {
-    class Lockable : public Handle
+    class Lockable : public Handle<>
     {
     public:
       explicit Lockable(HANDLE h);
@@ -34,7 +34,7 @@ namespace Windows
       void unlock();
     };
   
-    class Event : public Handle
+    class Event : public Handle<>
     {
     public:
       explicit Event();

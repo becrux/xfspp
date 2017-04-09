@@ -154,13 +154,13 @@ void Dispatcher::post(DWORD id, DWORD timeout, const std::shared_ptr< ITask > &t
 
           if (event == TaskHelper::CompletionEvent::Completed)
           {
-            auto it = _notQueuedTasks.find(id);
+            auto nit = _notQueuedTasks.find(id);
 
-            if (it != _notQueuedTasks.cend())
+            if (nit != _notQueuedTasks.cend())
             {
               Log::Logger() << "removing " << id << " from backup queue";
-              sp2 = it->second;
-              _notQueuedTasks.erase(it);
+              sp2 = nit->second;
+              _notQueuedTasks.erase(nit);
             }
 
             Log::Logger() << "removing " << id << " from running list";

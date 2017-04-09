@@ -4,6 +4,7 @@
 using namespace Windows;
 
 Timer::Timer(int timeout, std::function< void () > f) :
+  Handle<>(NULL,nullCloseHandle),
   _thread([this, timeout, f] ()
     {
       ::Log::Method m(__LAMBDA_FUNCSIG__("Timer"),LOG_STRING("timeout = " << timeout));
@@ -13,6 +14,8 @@ Timer::Timer(int timeout, std::function< void () > f) :
     })
 {
   ::Log::Method(__FUNCSIG__,LOG_STRING("timeout = " << timeout));
+
+  setHandle(_thread.handle());
 }
 
 Timer::~Timer()

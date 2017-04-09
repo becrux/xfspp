@@ -4,7 +4,7 @@
 using namespace Windows;
 
 Thread::Thread(std::function< void () > f) :
-  Handle(),
+  Handle<>(),
   _joined(false),
   _f(f)
 {
