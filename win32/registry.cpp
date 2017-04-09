@@ -1,3 +1,5 @@
+#include <tuple>
+
 #include "win32/registry.hpp"
 
 using namespace Windows::Registry;

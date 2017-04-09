@@ -12,20 +12,7 @@ set(SOURCES
   mgr.def
 )
 
-foreach(FILE ${SOURCES})
-  get_filename_component(SOURCE_FILE_WE ${FILE} NAME_WE)
-  get_filename_component(SOURCE_DIR ${FILE} DIRECTORY)
-  set(HEADER_FILE_STR "${CMAKE_SOURCE_DIR}/${SOURCE_DIR}/${SOURCE_FILE_WE}.hpp")
-  file(TO_CMAKE_PATH ${HEADER_FILE_STR} HEADER_FILE)
-  if (EXISTS ${HEADER_FILE})
-    list(APPEND HEADERS ${HEADER_FILE})
-  endif()
-  
-  file(GLOB UTIL_HEADER_FILES RELATIVE ${CMAKE_SOURCE_DIR} "util/*.hpp")
-  list(APPEND HEADERS ${UTIL_HEADER_FILES})
-  file(GLOB CEN_HEADER_FILES RELATIVE ${CMAKE_SOURCE_DIR} "cen/320/*.h")
-  list(APPEND HEADERS ${CEN_HEADER_FILES})
-endforeach()
+add_headers(HEADERS ${SOURCES})
 
 add_library(xfsmgr SHARED ${SOURCES} ${HEADERS})
 

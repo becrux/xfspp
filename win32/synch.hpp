@@ -55,6 +55,37 @@ namespace Windows
       explicit Locker(T &ref) : _ref(ref) { _ref.lock(); }
       ~Locker() { _ref.unlock(); }
     };
+
+    template<>
+    class Locker< HANDLE >
+    {
+      HANDLE _ref;
+
+      Locker(const Locker &);
+      Locker &operator=(const Locker &);
+  
+    public:
+      explicit Locker(HANDLE ref) : _ref(ref) { WaitForSingleObjectEx(_ref,INFINITE,FALSE); }
+      Locker(Locker &&o) :
+        _ref(o._ref)
+      {
+        o._ref = NULL;
+      }
+
+      ~Locker()
+      {
+        if (_ref != NULL)
+          ReleaseMutex(_ref);
+      }
+
+      Locker &operator=(Locker &&o)
+      {
+        _ref = o._ref;
+        o._ref = NULL;
+
+        return *this;
+      }
+    };
   }
 }
 

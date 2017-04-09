@@ -16,7 +16,7 @@ namespace Windows
 
     DWORD value() const;
     
-    explicit operator bool() const;
+    operator bool() const;
   };
 }
 

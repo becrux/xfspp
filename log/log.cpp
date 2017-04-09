@@ -1,9 +1,9 @@
 #include <iostream>
 #include <iomanip>
-
-#include <windows.h>
+#include <fstream>
 
 #include "log/log.hpp"
+#include "win32/synch.hpp"
 
 using namespace Log;
 

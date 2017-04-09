@@ -7,8 +7,6 @@
 #include <list>
 #include <set>
 
-#include <windows.h>
-
 #include "sp/task.hpp"
 #include "win32/synch.hpp"
 #include "win32/thread.hpp"
