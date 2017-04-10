@@ -1,5 +1,5 @@
 # xfspp
-CEN XFS C++ Framework
+CEN XFS C++11 Framework
 
 A pure Win32 implementation of the XFS standard (eXtensions for Financial Services)
 
