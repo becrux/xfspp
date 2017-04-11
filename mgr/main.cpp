@@ -11,6 +11,8 @@
 #include "xfsconf.h"
 
 #include "win32/synch.hpp"
+#include "common/version.hpp"
+#include "util/memory.hpp"
 
 namespace
 {
@@ -175,6 +177,28 @@ extern "C" HRESULT WINAPI WFSSetBlockingHook(XFSBLOCKINGHOOK lpBlockFunc, LPXFSB
 extern "C" HRESULT WINAPI WFSStartUp(DWORD dwVersionsRequired, LPWFSVERSION lpWFSVersion)
 {
   Windows::Synch::Locker< HANDLE > lock(mutexHandle);
+
+  std::tuple< XFS::Version,XFS::Version > vs(XFS::Version::split(dwVersionsRequired));
+
+  if (std::get< 0 >(vs) > std::get< 1 >(vs))
+    return WFS_ERR_INTERNAL_ERROR;
+
+  if (std::get< 0 >(vs) > XFS::Version(3,20))
+    return WFS_ERR_API_VER_TOO_HIGH;
+
+  if (std::get< 1 >(vs) < XFS::Version(3,20))
+    return WFS_ERR_API_VER_TOO_LOW;
+
+  if (!lpWFSVersion)
+    return WFS_ERR_INVALID_POINTER;
+
+  clearMem(*lpWFSVersion);
+
+  lpWFSVersion->wVersion = XFS::Version(3,20).value();
+  lpWFSVersion->wLowVersion = XFS::Version::min(3).value();
+  lpWFSVersion->wHighVersion = XFS::Version::max(3).value();
+  lpWFSVersion->szSystemStatus[0] = '\0';
+  strcpy(lpWFSVersion->szDescription,"xfspp XFS Manager");
 
   return WFS_SUCCESS;
 }

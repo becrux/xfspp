@@ -8,6 +8,7 @@ set(SOURCES
   ../win32/uuid.cpp
   ../win32/error.cpp
   ../log/log.cpp
+  ../common/version.cpp
   main.cpp
   mgr.def
 )
