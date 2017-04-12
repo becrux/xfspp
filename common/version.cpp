@@ -29,7 +29,17 @@ Version::Version(BYTE bMajor, BYTE bMinor) :
   
 WORD Version::value() const
 {
-  return (_minor << 8) | _major;
+  return (minor() << 8) | major();
+}
+
+WORD Version::major() const
+{
+  return _major;
+}
+
+WORD Version::minor() const
+{
+  return _minor;
 }
 
 Version Version::min(BYTE bMajor)
@@ -41,45 +51,59 @@ Version Version::max(BYTE bMajor)
 {
   return Version(bMajor,std::numeric_limits< BYTE >::max());
 }
-
-std::tuple< Version,Version > Version::split(DWORD dwVersions)
-{
-  return std::make_tuple< Version,Version >(Version(dwVersions >> 16),Version(dwVersions & 0xffff));
-}
     
-bool XFS::operator<(const Version &a, const Version &b)
+bool Version::operator<(const Version &o) const
 {
-  return (a._major < b._major) || ((a._major == b._major) && (a._minor < b._minor));
+  return (major() < o.major()) || ((major() == o.major()) && (minor() < o.minor()));
 }
 
-bool XFS::operator==(const Version &a, const Version &b)
+bool Version::operator==(const Version &o) const
 {
-  return (a._major == b._major) && (a._minor == b._minor);
-}
-
-bool XFS::operator<=(const Version &a, const Version &b)
-{
-  return (a < b) || (a == b);
-}
-
-bool XFS::operator!=(const Version &a, const Version &b)
-{
-  return !(a == b);
-}
-
-bool XFS::operator>=(const Version &a, const Version &b)
-{
-  return !(a < b);
-}
-
-bool XFS::operator>(const Version &a, const Version &b)
-{
-  return !(a <= b);
+  return (major() == o.major()) && (minor() == o.minor());
 }
 
 std::ostream &XFS::operator<<(std::ostream &out, const Version &v)
 {
-  out << v._major << "." << std::setw(2) << std::setfill('0') << v._minor;
+  out << v.major() << "." << std::setw(2) << std::setfill('0') << v.minor();
   
+  return out;
+}
+
+VersionRange::VersionRange(DWORD dwVersion) :
+  _start(dwVersion >> 16),
+  _end(dwVersion & 0xffff)
+{
+
+}
+
+Version VersionRange::start() const
+{
+  return _start;
+}
+
+Version VersionRange::end() const
+{
+  return _end;
+}
+
+DWORD VersionRange::value() const
+{
+  return (start().value() << 16) | end().value();
+}
+
+bool VersionRange::contains(const Version &v) const
+{
+  return (v >= start()) && (v <= end());
+}
+
+bool VersionRange::operator==(const VersionRange &o) const
+{
+  return (start() == o.start()) && (end() == o.end());
+}
+
+std::ostream &XFS::operator<<(std::ostream &out,const VersionRange &v)
+{
+  out << "[" << v.start() << " - " << v.end() << "]";
+
   return out;
 }

@@ -15,9 +15,11 @@
 
 #include <windows.h>
 
+#include "util/operators.hpp"
+
 namespace XFS
 {
-  class Version
+  class Version : private Comparable< Version >
   {
     WORD _major;
     WORD _minor;
@@ -27,27 +29,37 @@ namespace XFS
     explicit Version(BYTE bMajor, BYTE bMinor);
     
     WORD value() const;
+
+    WORD major() const;
+    WORD minor() const;
     
-    static std::tuple< Version,Version > split(DWORD dwVersions);
     static Version min(BYTE bMajor);
     static Version max(BYTE bMajor);
     
-    friend bool operator<(const Version &a, const Version &b);
-    friend bool operator<=(const Version &a, const Version &b);
-    friend bool operator==(const Version &a, const Version &b);
-    friend bool operator!=(const Version &a, const Version &b);
-    friend bool operator>=(const Version &a, const Version &b);
-    friend bool operator>(const Version &a, const Version &b);
-    friend std::ostream &operator<<(std::ostream &out, const Version &v);
+    bool operator<(const Version &o) const;
+    bool operator==(const Version &o) const;
   };
 
-  bool operator<(const Version &a,const Version &b);
-  bool operator<=(const Version &a,const Version &b);
-  bool operator==(const Version &a,const Version &b);
-  bool operator!=(const Version &a,const Version &b);
-  bool operator>=(const Version &a,const Version &b);
-  bool operator>(const Version &a,const Version &b);
+  class VersionRange : private EqualComparable< VersionRange >
+  {
+    Version _start;
+    Version _end;
+
+  public:
+    explicit VersionRange(DWORD dwVersion);
+
+    Version start() const;
+    Version end() const;
+
+    DWORD value() const;
+
+    bool contains(const Version &v) const;
+
+    bool operator==(const VersionRange &o) const;
+  };
+
   std::ostream &operator<<(std::ostream &out,const Version &v);
+  std::ostream &operator<<(std::ostream &out,const VersionRange &v);
 }
 
 #endif

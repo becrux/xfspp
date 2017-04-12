@@ -9,10 +9,24 @@
 #ifndef __MEMORY_HPP__
 #define __MEMORY_HPP__
 
+#include <cstdint>
+
 template< typename T >
 inline void clearMem(T &var)
 {
   ::memset(&var,0,sizeof(T));
+}
+
+template< typename T >
+inline void copyMem(T &dst, const std::uint8_t *src)
+{
+  ::memcpy(&dst,src,sizeof(T));
+}
+
+template< typename T >
+inline void copyMem(std::uint8_t *dst, const T &src)
+{
+  ::memcpy(dst,&src,sizeof(T));
 }
 
 #endif

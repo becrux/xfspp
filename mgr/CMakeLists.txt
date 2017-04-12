@@ -7,6 +7,8 @@ set(SOURCES
   ../win32/msgwnd.cpp
   ../win32/uuid.cpp
   ../win32/error.cpp
+  ../win32/shmem.cpp
+  ../sqlite/sqlite3.c
   ../log/log.cpp
   ../common/version.cpp
   main.cpp
@@ -17,4 +19,4 @@ add_headers(HEADERS ${SOURCES})
 
 add_library(xfsmgr SHARED ${SOURCES} ${HEADERS})
 
-target_link_libraries(xfsmgr rpcrt4)
+target_link_libraries(xfsmgr rpcrt4 shlwapi)

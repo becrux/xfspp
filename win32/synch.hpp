@@ -10,6 +10,8 @@
 #ifndef __SYNCH_HPP__
 #define __SYNCH_HPP__
 
+#include <string>
+
 #include <windows.h>
 
 #include "win32/handle.hpp"
@@ -29,7 +31,7 @@ namespace Windows
     class Mutex : public Lockable
     {
     public:
-      explicit Mutex();
+      explicit Mutex(const std::wstring &sName = std::wstring());
   
       void unlock();
     };

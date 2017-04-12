@@ -21,8 +21,8 @@ void Lockable::lock()
   WaitForSingleObjectEx(handle(),INFINITE,FALSE);
 }
 
-Mutex::Mutex() :
-  Lockable(CreateMutex(NULL,FALSE,NULL))
+Mutex::Mutex(const std::wstring &sName) :
+  Lockable(CreateMutex(NULL,FALSE,(sName.empty())? NULL : (std::wstring(L"Global\\") + sName).c_str()))
 {
 
 }
