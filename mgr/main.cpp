@@ -7,6 +7,8 @@
  */
 
 #include <memory>
+#include <map>
+#include <list>
 #include <sstream>
 
 #include "xfsapi.h"
@@ -32,6 +34,7 @@ namespace
   bool initialized = false;
   bool firstInstance = false;
   sqlite3 *pDb;
+  std::map< void *,std::list< void * > > *allocMap = nullptr;
 }
 
 extern "C" HRESULT WINAPI WFSCancelAsyncRequest(HSERVICE hService, REQUESTID RequestID)
@@ -60,6 +63,8 @@ extern "C" HRESULT WINAPI WFSCleanUp()
 
   if (!initialized)
     return WFS_ERR_NOT_STARTED;
+
+  sqlite3_close(pDb);
 
   return WFS_SUCCESS;
 }
@@ -372,16 +377,47 @@ extern "C" HRESULT WINAPI WFMSetTraceLevel(HSERVICE hService, DWORD dwTraceLevel
   return WFS_SUCCESS;
 }
 
-extern "C" HRESULT WINAPI WFMAllocateBuffer(ULONG ulSize, ULONG ulFlags, LPVOID * lppvData)
+extern "C" HRESULT WINAPI WFMAllocateBuffer(ULONG ulSize, ULONG ulFlags, LPVOID *lppvData)
 {
   Windows::Synch::Locker< HANDLE > lock(mutexHandle);
 
+  if (!lppvData)
+    return WFS_ERR_INVALID_POINTER;
+
+  if (!allocMap)
+    allocMap = new std::map< void *,std::list< void * > >();
+
+  *lppvData = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,ulSize);
+
+  if (!*lppvData)
+    return WFS_ERR_OUT_OF_MEMORY;
+
+  allocMap->emplace(*lppvData,std::list< void * >());
+    
   return WFS_SUCCESS;
 }
 
-extern "C" HRESULT WINAPI WFMAllocateMore(ULONG ulSize, LPVOID lpvOriginal, LPVOID * lppvData)
+extern "C" HRESULT WINAPI WFMAllocateMore(ULONG ulSize, LPVOID lpvOriginal, LPVOID *lppvData)
 {
   Windows::Synch::Locker< HANDLE > lock(mutexHandle);
+
+  if (!lppvData)
+    return WFS_ERR_INVALID_POINTER;
+
+  if (!allocMap)
+    return WFS_ERR_INVALID_ADDRESS;
+
+  auto it = allocMap->find(lpvOriginal);
+  
+  if (it == allocMap->cend())
+    return WFS_ERR_INVALID_ADDRESS;
+
+  *lppvData = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,ulSize);
+
+  if (!*lppvData)
+    return WFS_ERR_OUT_OF_MEMORY;
+
+  (*allocMap)[lpvOriginal].push_back(*lppvData);
 
   return WFS_SUCCESS;
 }
@@ -389,6 +425,21 @@ extern "C" HRESULT WINAPI WFMAllocateMore(ULONG ulSize, LPVOID lpvOriginal, LPVO
 extern "C" HRESULT WINAPI WFMFreeBuffer(LPVOID lpvData)
 {
   Windows::Synch::Locker< HANDLE > lock(mutexHandle);
+  
+  if (!lpvData)
+    return WFS_ERR_INVALID_POINTER;
+
+  auto it = allocMap->find(lpvData);
+
+  if (it == allocMap->cend())
+    return WFS_ERR_INVALID_BUFFER;
+
+  for (void *p : allocMap->at(lpvData))
+    HeapFree(GetProcessHeap(),0,p);
+
+  HeapFree(GetProcessHeap(),0,lpvData);
+
+  allocMap->erase(it);
 
   return WFS_SUCCESS;
 }
@@ -505,6 +556,7 @@ extern "C" BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID)
     case DLL_PROCESS_DETACH:
       CloseHandle(mutexHandle);
       CloseHandle(memMapHandle);
+      delete allocMap;
       break;
     
     default:
