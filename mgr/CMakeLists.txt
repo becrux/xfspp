@@ -8,7 +8,7 @@ set(SOURCES
   ../win32/uuid.cpp
   ../win32/error.cpp
   ../win32/shmem.cpp
-  ../sqlite/sqlite3.c
+  ../win32/library.cpp
   ../log/log.cpp
   ../common/version.cpp
   main.cpp

@@ -26,3 +26,10 @@ SharedMemory::~SharedMemory()
 
   UnmapViewOfFile(_ptr);
 }
+
+void SharedMemory::access(DWORD dwOffset, std::function< void(std::uint8_t *) > f)
+{
+  Synch::Locker< Synch::Mutex > lock(_m);
+
+  f(_ptr + dwOffset);
+}

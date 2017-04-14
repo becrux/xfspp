@@ -76,6 +76,13 @@ VersionRange::VersionRange(DWORD dwVersion) :
 
 }
 
+VersionRange::VersionRange(const Version &vStart, const Version &vEnd) :
+  _start(vStart),
+  _end(vEnd)
+{
+
+}
+
 Version VersionRange::start() const
 {
   return _start;

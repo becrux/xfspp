@@ -47,6 +47,7 @@ namespace XFS
 
   public:
     explicit VersionRange(DWORD dwVersion);
+    explicit VersionRange(const Version &vStart, const Version &vEnd);
 
     Version start() const;
     Version end() const;

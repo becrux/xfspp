@@ -55,6 +55,8 @@ namespace Windows
 
       return access(dwOffset,oldValue,f);
     }
+
+    void access(DWORD dwOffset, std::function< void(std::uint8_t *) > f);
   };
 }
 

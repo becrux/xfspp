@@ -10,30 +10,40 @@
 #include <map>
 #include <list>
 #include <sstream>
+#include <algorithm>
 
 #include "xfsapi.h"
 #include "xfsadmin.h"
 #include "xfsconf.h"
 
 #include "win32/synch.hpp"
+#include "win32/shmem.hpp"
+#include "win32/library.hpp"
+#include "win32/msgwnd.hpp"
 #include "common/version.hpp"
 #include "util/memory.hpp"
 
 #include <shlwapi.h>
 
-#include "sqlite/sqlite3.h"
-
-#define HSERVICE_OFFSET 0
-#define HAPP_OFFSET     HSERVICE_OFFSET + sizeof(DWORD)
-
 namespace
 {
+  struct ShMemLayout
+  {
+    struct
+    {
+      REQUESTID reqId;
+      Windows::Library *spLib;
+    } hServices[32768];
+
+    bool hApps[32768];
+  };
+
   HINSTANCE dllInstance;
   HANDLE mutexHandle = NULL;
   HANDLE memMapHandle = NULL;
   bool initialized = false;
   bool firstInstance = false;
-  sqlite3 *pDb;
+  Windows::SharedMemory shMem(sizeof(ShMemLayout));
   std::map< void *,std::list< void * > > *allocMap = nullptr;
 }
 
@@ -44,7 +54,14 @@ extern "C" HRESULT WINAPI WFSCancelAsyncRequest(HSERVICE hService, REQUESTID Req
   if (!initialized)
     return WFS_ERR_NOT_STARTED;
 
-  return WFS_SUCCESS;
+  if (!hService)
+    return WFS_ERR_INVALID_HSERVICE;
+
+  Windows::Library *lib = shMem.access< ShMemLayout >(0).hServices[hService - 1].spLib;
+  if (!lib)
+    return WFS_ERR_INVALID_HSERVICE;
+
+  return lib->call< HRESULT >("WFPCancelAsyncRequest",hService,RequestID);
 }
 
 extern "C" HRESULT WINAPI WFSCancelBlockingCall(DWORD dwThreadID)
@@ -64,8 +81,6 @@ extern "C" HRESULT WINAPI WFSCleanUp()
   if (!initialized)
     return WFS_ERR_NOT_STARTED;
 
-  sqlite3_close(pDb);
-
   return WFS_SUCCESS;
 }
 
@@ -76,7 +91,26 @@ extern "C" HRESULT WINAPI WFSClose(HSERVICE hService)
   if (!initialized)
     return WFS_ERR_NOT_STARTED;
 
-  return WFS_SUCCESS;
+  Windows::Synch::Semaphore sem(0,1);
+  HRESULT hRes = WFS_SUCCESS;
+  Windows::MsgWnd wnd(dllInstance,[&sem, &hRes] (UINT uMsg, WPARAM wParam, LPARAM lParam)
+    {
+      if (uMsg == WFS_CLOSE_COMPLETE)
+      {
+        hRes = reinterpret_cast< LPWFSRESULT >(lParam)->hResult;
+        sem.unlock();
+      }
+    });
+
+  wnd.start();
+
+  REQUESTID reqId;
+  if ((hRes = WFSAsyncClose(hService,wnd.handle(),&reqId)) != WFS_SUCCESS)
+    return hRes;
+
+  sem.lock();
+
+  return hRes;
 }
 
 extern "C" HRESULT WINAPI WFSAsyncClose(HSERVICE hService, HWND hWnd, LPREQUESTID lpRequestID)
@@ -86,7 +120,31 @@ extern "C" HRESULT WINAPI WFSAsyncClose(HSERVICE hService, HWND hWnd, LPREQUESTI
   if (!initialized)
     return WFS_ERR_NOT_STARTED;
 
-  return WFS_SUCCESS;
+  if (!hService)
+    return WFS_ERR_INVALID_HSERVICE;
+
+  if (!hWnd)
+    return WFS_ERR_INVALID_HWND;
+
+  if (!lpRequestID)
+    return WFS_ERR_INVALID_POINTER;
+
+  Windows::Library *lib = nullptr;
+  shMem.access(0,[&lib, lpRequestID, hService] (uint8_t *ptr)
+    {
+      ShMemLayout *p = reinterpret_cast< ShMemLayout * >(ptr);
+
+      if (p->hServices[hService - 1].reqId)
+      {
+        *lpRequestID = p->hServices[hService - 1].reqId++;
+        lib = p->hServices[hService - 1].spLib;
+      }
+    });
+
+  if (!lib)
+    return WFS_ERR_INVALID_HSERVICE;
+
+  return lib->call< HRESULT >("WFPClose",hService,hWnd,*lpRequestID);
 }
 
 extern "C" HRESULT WINAPI WFSCreateAppHandle(LPHAPP lphApp)
@@ -99,13 +157,21 @@ extern "C" HRESULT WINAPI WFSCreateAppHandle(LPHAPP lphApp)
   if (!lphApp)
     return WFS_ERR_INVALID_POINTER;
 
-  sqlite3_stmt *pStmt;
-  sqlite3_prepare_v2(pDb,"insert into apps(handle) values(default)",-1,&pStmt,NULL);
-  sqlite3_step(pStmt);
-  *lphApp = reinterpret_cast< HAPP >(sqlite3_last_insert_rowid(pDb));
-  sqlite3_finalize(pStmt);
+  *lphApp = NULL;
+  shMem.access(0,[lphApp] (uint8_t *bufPtr)
+    {
+      ShMemLayout *p = reinterpret_cast< ShMemLayout * >(bufPtr);
 
-  return WFS_SUCCESS;
+      auto it = std::find(std::begin(p->hApps),std::end(p->hApps),false);
+
+      if (it != std::end(p->hApps))
+      {
+        *lphApp = reinterpret_cast< HAPP >(std::distance(std::begin(p->hApps),it) + 1);
+        *it = true;
+      }
+    });
+
+  return (*lphApp)? WFS_SUCCESS : WFS_ERR_INTERNAL_ERROR;
 }
 
 extern "C" HRESULT WINAPI WFSDeregister(HSERVICE hService, DWORD dwEventClass, HWND hWndReg)
@@ -115,7 +181,26 @@ extern "C" HRESULT WINAPI WFSDeregister(HSERVICE hService, DWORD dwEventClass, H
   if (!initialized)
     return WFS_ERR_NOT_STARTED;
 
-  return WFS_SUCCESS;
+  Windows::Synch::Semaphore sem(0,1);
+  HRESULT hRes = WFS_SUCCESS;
+  Windows::MsgWnd wnd(dllInstance,[&sem, &hRes] (UINT uMsg, WPARAM wParam, LPARAM lParam)
+  {
+    if (uMsg == WFS_DEREGISTER_COMPLETE)
+    {
+      hRes = reinterpret_cast< LPWFSRESULT >(lParam)->hResult;
+      sem.unlock();
+    }
+  });
+
+  wnd.start();
+
+  REQUESTID reqId;
+  if ((hRes = WFSAsyncDeregister(hService,dwEventClass,hWndReg,wnd.handle(),&reqId)) != WFS_SUCCESS)
+    return hRes;
+
+  sem.lock();
+
+  return hRes;
 }
 
 extern "C" HRESULT WINAPI WFSAsyncDeregister(HSERVICE hService, DWORD dwEventClass, HWND hWndReg, HWND hWnd, LPREQUESTID lpRequestID)
@@ -125,7 +210,34 @@ extern "C" HRESULT WINAPI WFSAsyncDeregister(HSERVICE hService, DWORD dwEventCla
   if (!initialized)
     return WFS_ERR_NOT_STARTED;
 
-  return WFS_SUCCESS;
+  if (!hService)
+    return WFS_ERR_INVALID_HSERVICE;
+
+  if (!hWndReg)
+    return WFS_ERR_INVALID_HWNDREG;
+
+  if (!hWnd)
+    return WFS_ERR_INVALID_HWND;
+
+  if (!lpRequestID)
+    return WFS_ERR_INVALID_POINTER;
+
+  Windows::Library *lib = nullptr;
+  shMem.access(0,[&lib, hService, lpRequestID] (uint8_t *ptr)
+  {
+    ShMemLayout *p = reinterpret_cast< ShMemLayout * >(ptr);
+
+    if (p->hServices[hService - 1].reqId)
+    {
+      *lpRequestID = p->hServices[hService - 1].reqId++;
+      lib = p->hServices[hService - 1].spLib;
+    }
+  });
+
+  if (!lib)
+    return WFS_ERR_INVALID_HSERVICE;
+
+  return lib->call< HRESULT >("WFPDeregister",hService,dwEventClass,hWndReg,hWnd,*lpRequestID);
 }
 
 extern "C" HRESULT WINAPI WFSDestroyAppHandle(HAPP hApp)
@@ -135,13 +247,22 @@ extern "C" HRESULT WINAPI WFSDestroyAppHandle(HAPP hApp)
   if (!initialized)
     return WFS_ERR_NOT_STARTED;
 
-  sqlite3_stmt *pStmt;
-  sqlite3_prepare_v2(pDb,"delete from apps where handle = ?",-1,&pStmt,NULL);
-  sqlite3_bind_int(pStmt,1,reinterpret_cast< int >(hApp));
-  int res = sqlite3_step(pStmt);
-  sqlite3_finalize(pStmt);
+  if (!hApp)
+    return WFS_ERR_INVALID_APP_HANDLE;
 
-  return (res == SQLITE_DONE)? WFS_SUCCESS : WFS_ERR_INVALID_APP_HANDLE;
+  int idx = (reinterpret_cast< int >(hApp) - 1);
+  shMem.access(0,[&idx](uint8_t *bufPtr)
+    {
+      ShMemLayout *p = reinterpret_cast< ShMemLayout * >(bufPtr);
+
+      if (p->hApps[idx])
+      {
+        p->hApps[idx] = false;
+        idx = 0;
+      }
+    });
+
+  return (!idx)? WFS_SUCCESS : WFS_ERR_INVALID_APP_HANDLE;
 }
 
 extern "C" HRESULT WINAPI WFSExecute(HSERVICE hService, DWORD dwCommand, LPVOID lpCmdData, DWORD dwTimeOut, LPWFSRESULT * lppResult)
@@ -151,7 +272,26 @@ extern "C" HRESULT WINAPI WFSExecute(HSERVICE hService, DWORD dwCommand, LPVOID 
   if (!initialized)
     return WFS_ERR_NOT_STARTED;
 
-  return WFS_SUCCESS;
+  Windows::Synch::Semaphore sem(0,1);
+  HRESULT hRes = WFS_SUCCESS;
+  Windows::MsgWnd wnd(dllInstance,[&sem, &hRes] (UINT uMsg, WPARAM wParam, LPARAM lParam)
+  {
+    if (uMsg == WFS_EXECUTE_COMPLETE)
+    {
+      hRes = reinterpret_cast< LPWFSRESULT >(lParam)->hResult;
+      sem.unlock();
+    }
+  });
+
+  wnd.start();
+
+  REQUESTID reqId;
+  if ((hRes = WFSAsyncExecute(hService,dwCommand,lpCmdData,dwTimeOut,wnd.handle(),&reqId)) != WFS_SUCCESS)
+    return hRes;
+
+  sem.lock();
+
+  return hRes;
 }
 
 extern "C" HRESULT WINAPI WFSAsyncExecute(HSERVICE hService, DWORD dwCommand, LPVOID lpCmdData, DWORD dwTimeOut, HWND hWnd, LPREQUESTID lpRequestID)
@@ -161,7 +301,31 @@ extern "C" HRESULT WINAPI WFSAsyncExecute(HSERVICE hService, DWORD dwCommand, LP
   if (!initialized)
     return WFS_ERR_NOT_STARTED;
 
-  return WFS_SUCCESS;
+  if (!hService)
+    return WFS_ERR_INVALID_HSERVICE;
+
+  if (!hWnd)
+    return WFS_ERR_INVALID_HWND;
+
+  if (!lpRequestID)
+    return WFS_ERR_INVALID_POINTER;
+
+  Windows::Library *lib = nullptr;
+  shMem.access(0,[&lib, hService, lpRequestID] (uint8_t *ptr)
+  {
+    ShMemLayout *p = reinterpret_cast< ShMemLayout * >(ptr);
+
+    if (p->hServices[hService - 1].reqId)
+    {
+      *lpRequestID = p->hServices[hService - 1].reqId++;
+      lib = p->hServices[hService - 1].spLib;
+    }
+  });
+
+  if (!lib)
+    return WFS_ERR_INVALID_HSERVICE;
+
+  return lib->call< HRESULT >("WFPExecute",hService,dwCommand,lpCmdData,dwTimeOut,hWnd,*lpRequestID);
 }
 
 extern "C" HRESULT WINAPI WFSFreeResult(LPWFSRESULT lpResult)
@@ -181,7 +345,26 @@ extern "C" HRESULT WINAPI WFSGetInfo(HSERVICE hService, DWORD dwCategory, LPVOID
   if (!initialized)
     return WFS_ERR_NOT_STARTED;
 
-  return WFS_SUCCESS;
+  Windows::Synch::Semaphore sem(0,1);
+  HRESULT hRes = WFS_SUCCESS;
+  Windows::MsgWnd wnd(dllInstance,[&sem, &hRes] (UINT uMsg, WPARAM wParam, LPARAM lParam)
+  {
+    if (uMsg == WFS_GETINFO_COMPLETE)
+    {
+      hRes = reinterpret_cast< LPWFSRESULT >(lParam)->hResult;
+      sem.unlock();
+    }
+  });
+
+  wnd.start();
+
+  REQUESTID reqId;
+  if ((hRes = WFSAsyncGetInfo(hService,dwCategory,lpQueryDetails,dwTimeOut,wnd.handle(),&reqId)) != WFS_SUCCESS)
+    return hRes;
+
+  sem.lock();
+
+  return hRes;
 }
 
 extern "C" HRESULT WINAPI WFSAsyncGetInfo(HSERVICE hService, DWORD dwCategory, LPVOID lpQueryDetails, DWORD dwTimeOut, HWND hWnd, LPREQUESTID lpRequestID)
@@ -191,7 +374,31 @@ extern "C" HRESULT WINAPI WFSAsyncGetInfo(HSERVICE hService, DWORD dwCategory, L
   if (!initialized)
     return WFS_ERR_NOT_STARTED;
 
-  return WFS_SUCCESS;
+  if (!hService)
+    return WFS_ERR_INVALID_HSERVICE;
+
+  if (!hWnd)
+    return WFS_ERR_INVALID_HWND;
+
+  if (!lpRequestID)
+    return WFS_ERR_INVALID_POINTER;
+
+  Windows::Library *lib = nullptr;
+  shMem.access(0,[&lib, hService, lpRequestID] (uint8_t *ptr)
+  {
+    ShMemLayout *p = reinterpret_cast< ShMemLayout * >(ptr);
+
+    if (p->hServices[hService - 1].reqId)
+    {
+      *lpRequestID = p->hServices[hService - 1].reqId++;
+      lib = p->hServices[hService - 1].spLib;
+    }
+  });
+
+  if (!lib)
+    return WFS_ERR_INVALID_HSERVICE;
+
+  return lib->call< HRESULT >("WFPGetInfo",hService,dwCategory,lpQueryDetails,dwTimeOut,hWnd,*lpRequestID);
 }
 
 extern "C" BOOL WINAPI WFSIsBlocking()
@@ -204,14 +411,37 @@ extern "C" BOOL WINAPI WFSIsBlocking()
   return FALSE;
 }
 
-extern "C" HRESULT WINAPI WFSLock(HSERVICE hService, DWORD dwTimeOut, LPWFSRESULT * lppResult)
+extern "C" HRESULT WINAPI WFSLock(HSERVICE hService, DWORD dwTimeOut, LPWFSRESULT *lppResult)
 {
   Windows::Synch::Locker< HANDLE > lock(mutexHandle);
 
   if (!initialized)
     return WFS_ERR_NOT_STARTED;
 
-  return WFS_SUCCESS;
+  if (!lppResult)
+    return WFS_ERR_INVALID_POINTER;
+
+  Windows::Synch::Semaphore sem(0,1);
+  HRESULT hRes = WFS_SUCCESS;
+  Windows::MsgWnd wnd(dllInstance,[&sem, &hRes, &lppResult] (UINT uMsg, WPARAM wParam, LPARAM lParam)
+  {
+    if (uMsg == WFS_LOCK_COMPLETE)
+    {
+      *lppResult = reinterpret_cast< LPWFSRESULT >(lParam);
+      hRes = reinterpret_cast< LPWFSRESULT >(lParam)->hResult;
+      sem.unlock();
+    }
+  });
+
+  wnd.start();
+
+  REQUESTID reqId;
+  if ((hRes = WFSAsyncLock(hService,dwTimeOut,wnd.handle(),&reqId)) != WFS_SUCCESS)
+    return hRes;
+
+  sem.lock();
+
+  return hRes;
 }
 
 extern "C" HRESULT WINAPI WFSAsyncLock(HSERVICE hService, DWORD dwTimeOut, HWND hWnd, LPREQUESTID lpRequestID)
@@ -221,7 +451,31 @@ extern "C" HRESULT WINAPI WFSAsyncLock(HSERVICE hService, DWORD dwTimeOut, HWND 
   if (!initialized)
     return WFS_ERR_NOT_STARTED;
 
-  return WFS_SUCCESS;
+  if (!hService)
+    return WFS_ERR_INVALID_HSERVICE;
+
+  if (!hWnd)
+    return WFS_ERR_INVALID_HWND;
+
+  if (!lpRequestID)
+    return WFS_ERR_INVALID_POINTER;
+
+  Windows::Library *lib = nullptr;
+  shMem.access(0,[&lib, hService, lpRequestID] (uint8_t *ptr)
+  {
+    ShMemLayout *p = reinterpret_cast< ShMemLayout * >(ptr);
+
+    if (p->hServices[hService - 1].reqId)
+    {
+      *lpRequestID = p->hServices[hService - 1].reqId++;
+      lib = p->hServices[hService - 1].spLib;
+    }
+  });
+
+  if (!lib)
+    return WFS_ERR_INVALID_HSERVICE;
+
+  return lib->call< HRESULT >("WFPLock",hService,dwTimeOut,hWnd,*lpRequestID);
 }
 
 extern "C" HRESULT WINAPI WFSOpen(LPSTR lpszLogicalName, HAPP hApp, LPSTR lpszAppID, DWORD dwTraceLevel, DWORD dwTimeOut, DWORD dwSrvcVersionsRequired, LPWFSVERSION lpSrvcVersion, LPWFSVERSION lpSPIVersion, LPHSERVICE lphService)
@@ -231,7 +485,26 @@ extern "C" HRESULT WINAPI WFSOpen(LPSTR lpszLogicalName, HAPP hApp, LPSTR lpszAp
   if (!initialized)
     return WFS_ERR_NOT_STARTED;
 
-  return WFS_SUCCESS;
+  Windows::Synch::Semaphore sem(0,1);
+  HRESULT hRes = WFS_SUCCESS;
+  Windows::MsgWnd wnd(dllInstance,[&sem, &hRes] (UINT uMsg, WPARAM wParam, LPARAM lParam)
+  {
+    if (uMsg == WFS_OPEN_COMPLETE)
+    {
+      hRes = reinterpret_cast< LPWFSRESULT >(lParam)->hResult;
+      sem.unlock();
+    }
+  });
+
+  wnd.start();
+
+  REQUESTID reqId;
+  if ((hRes = WFSAsyncOpen(lpszLogicalName,hApp,lpszAppID,dwTraceLevel,dwTimeOut,lphService,wnd.handle(),dwSrvcVersionsRequired,lpSrvcVersion,lpSPIVersion,&reqId)) != WFS_SUCCESS)
+    return hRes;
+
+  sem.lock();
+
+  return hRes;
 }
 
 extern "C" HRESULT WINAPI WFSAsyncOpen(LPSTR lpszLogicalName, HAPP hApp, LPSTR lpszAppID, DWORD dwTraceLevel, DWORD dwTimeOut, LPHSERVICE lphService, HWND hWnd, DWORD dwSrvcVersionsRequired, LPWFSVERSION lpSrvcVersion, LPWFSVERSION lpSPIVersion, LPREQUESTID lpRequestID)
@@ -241,7 +514,61 @@ extern "C" HRESULT WINAPI WFSAsyncOpen(LPSTR lpszLogicalName, HAPP hApp, LPSTR l
   if (!initialized)
     return WFS_ERR_NOT_STARTED;
 
-  return WFS_SUCCESS;
+  if (!hApp)
+    return WFS_ERR_INVALID_APP_HANDLE;
+
+  if (!lpszLogicalName || !lpszAppID || !lphService || !lpSrvcVersion || !lpSPIVersion || !lpRequestID)
+    return WFS_ERR_INVALID_POINTER;
+
+  HRESULT res = WFS_SUCCESS;
+  int idx = 0;
+  *lphService = 0;
+  *lpRequestID = 0;
+  clearMem(*lpSPIVersion);
+  clearMem(*lpSrvcVersion);
+
+  shMem.access(0,[&res, &idx, hApp, lpRequestID, lphService] (uint8_t *ptr)
+    {
+      ShMemLayout *p = reinterpret_cast< ShMemLayout * >(ptr);
+
+      if (!p->hApps[reinterpret_cast<int>(hApp) - 1])
+      {
+        res = WFS_ERR_INVALID_APP_HANDLE;
+        return;
+      }
+
+      auto it = std::find_if(std::begin(p->hServices),std::end(p->hServices),[] (const auto &x) { return x.reqId == 0; });
+      if (it == std::end(p->hServices))
+      {
+        res = WFS_ERR_INTERNAL_ERROR;
+        return;
+      }
+
+      it->reqId = 1;
+      it->spLib = new Windows::Library(L"sp.dll");
+      *lpRequestID = 1;
+      *lphService = static_cast< HSERVICE >(std::distance(std::begin(p->hServices),it) + 1);
+    });
+
+  if (res != WFS_SUCCESS)
+    return res;
+
+  Windows::Library *lib = shMem.access< ShMemLayout >(0).hServices[idx].spLib;
+
+  return lib->call< HRESULT >("WFPOpen",
+    *lphService,
+    lpszLogicalName,
+    hApp,
+    lpszAppID,
+    dwTraceLevel,
+    dwTimeOut,
+    hWnd,
+    *lpRequestID,
+    lib->handle(),
+    XFS::VersionRange(XFS::Version(3,0),XFS::Version(3,30)).value(),
+    lpSPIVersion,
+    XFS::VersionRange(XFS::Version(3,0),XFS::Version(3,30)).value(),
+    lpSrvcVersion);
 }
 
 extern "C" HRESULT WINAPI WFSRegister(HSERVICE hService, DWORD dwEventClass, HWND hWndReg)
@@ -251,7 +578,26 @@ extern "C" HRESULT WINAPI WFSRegister(HSERVICE hService, DWORD dwEventClass, HWN
   if (!initialized)
     return WFS_ERR_NOT_STARTED;
 
-  return WFS_SUCCESS;
+  Windows::Synch::Semaphore sem(0,1);
+  HRESULT hRes = WFS_SUCCESS;
+  Windows::MsgWnd wnd(dllInstance,[&sem, &hRes] (UINT uMsg, WPARAM wParam, LPARAM lParam)
+  {
+    if (uMsg == WFS_REGISTER_COMPLETE)
+    {
+      hRes = reinterpret_cast< LPWFSRESULT >(lParam)->hResult;
+      sem.unlock();
+    }
+  });
+
+  wnd.start();
+
+  REQUESTID reqId;
+  if ((hRes = WFSAsyncRegister(hService,dwEventClass,hWndReg,wnd.handle(),&reqId)) != WFS_SUCCESS)
+    return hRes;
+
+  sem.lock();
+
+  return hRes;
 }
 
 extern "C" HRESULT WINAPI WFSAsyncRegister(HSERVICE hService, DWORD dwEventClass, HWND hWndReg, HWND hWnd, LPREQUESTID lpRequestID)
@@ -261,7 +607,34 @@ extern "C" HRESULT WINAPI WFSAsyncRegister(HSERVICE hService, DWORD dwEventClass
   if (!initialized)
     return WFS_ERR_NOT_STARTED;
 
-  return WFS_SUCCESS;
+  if (!hService)
+    return WFS_ERR_INVALID_HSERVICE;
+
+  if (!hWnd)
+    return WFS_ERR_INVALID_HWND;
+
+  if (!hWndReg)
+    return WFS_ERR_INVALID_HWNDREG;
+
+  if (!lpRequestID)
+    return WFS_ERR_INVALID_POINTER;
+
+  Windows::Library *lib = nullptr;
+  shMem.access(0,[&lib, hService, lpRequestID] (uint8_t *ptr)
+  {
+    ShMemLayout *p = reinterpret_cast< ShMemLayout * >(ptr);
+
+    if (p->hServices[hService - 1].reqId)
+    {
+      *lpRequestID = p->hServices[hService - 1].reqId++;
+      lib = p->hServices[hService - 1].spLib;
+    }
+  });
+
+  if (!lib)
+    return WFS_ERR_INVALID_HSERVICE;
+
+  return lib->call< HRESULT >("WFPRegister",hService,dwEventClass,hWndReg,hWnd,*lpRequestID);
 }
 
 extern "C" HRESULT WINAPI WFSSetBlockingHook(XFSBLOCKINGHOOK lpBlockFunc, LPXFSBLOCKINGHOOK lppPrevFunc)
@@ -303,38 +676,6 @@ extern "C" HRESULT WINAPI WFSStartUp(DWORD dwVersionsRequired, LPWFSVERSION lpWF
   lpWFSVersion->szSystemStatus[0] = '\0';
   strcpy_s(lpWFSVersion->szDescription,"xfspp XFS Manager");
 
-  TCHAR tempPath[MAX_PATH];
-  GetTempPath(MAX_PATH,tempPath);
-
-  TCHAR dbFilePath[MAX_PATH];
-  PathCombine(dbFilePath,tempPath,L"xfsppmgr.db3");
-
-  if (firstInstance)
-  {
-    if (!DeleteFile(dbFilePath))
-    {
-      if (GetLastError() != ERROR_FILE_NOT_FOUND)
-        return WFS_ERR_INTERNAL_ERROR;
-    }
-  }
-
-  if (sqlite3_open16(dbFilePath,&pDb) != SQLITE_OK)
-    return WFS_ERR_INTERNAL_ERROR;
-
-  sqlite3_exec(pDb,"pragma synchronous = OFF",NULL,NULL,NULL);
-
-  if (firstInstance)
-  {
-    if (sqlite3_exec(pDb,
-      "create table services(" \
-        "hService integer primary key, " \
-        "name text not null, " \
-        "timestamp integer not null); " \
-      "create table apps(" \
-        "handle integer primary key);",NULL,NULL,NULL) != SQLITE_OK)
-      return WFS_ERR_INTERNAL_ERROR;
-  }
-
   initialized = true;
 
   return WFS_SUCCESS;
@@ -357,7 +698,26 @@ extern "C" HRESULT WINAPI WFSUnlock(HSERVICE hService)
   if (!initialized)
     return WFS_ERR_NOT_STARTED;
 
-  return WFS_SUCCESS;
+  Windows::Synch::Semaphore sem(0,1);
+  HRESULT hRes = WFS_SUCCESS;
+  Windows::MsgWnd wnd(dllInstance,[&sem, &hRes] (UINT uMsg, WPARAM wParam, LPARAM lParam)
+  {
+    if (uMsg == WFS_UNLOCK_COMPLETE)
+    {
+      hRes = reinterpret_cast< LPWFSRESULT >(lParam)->hResult;
+      sem.unlock();
+    }
+  });
+
+  wnd.start();
+
+  REQUESTID reqId;
+  if ((hRes = WFSAsyncUnlock(hService,wnd.handle(),&reqId)) != WFS_SUCCESS)
+    return hRes;
+
+  sem.lock();
+
+  return hRes;
 }
 
 extern "C" HRESULT WINAPI WFSAsyncUnlock(HSERVICE hService, HWND hWnd, LPREQUESTID lpRequestID)
@@ -367,7 +727,31 @@ extern "C" HRESULT WINAPI WFSAsyncUnlock(HSERVICE hService, HWND hWnd, LPREQUEST
   if (!initialized)
     return WFS_ERR_NOT_STARTED;
 
-  return WFS_SUCCESS;
+  if (!hService)
+    return WFS_ERR_INVALID_HSERVICE;
+
+  if (!hWnd)
+    return WFS_ERR_INVALID_HWND;
+
+  if (!lpRequestID)
+    return WFS_ERR_INVALID_POINTER;
+
+  Windows::Library *lib = nullptr;
+  shMem.access(0,[&lib, hService, lpRequestID] (uint8_t *ptr)
+  {
+    ShMemLayout *p = reinterpret_cast< ShMemLayout * >(ptr);
+
+    if (p->hServices[hService - 1].reqId)
+    {
+      *lpRequestID = p->hServices[hService - 1].reqId++;
+      lib = p->hServices[hService - 1].spLib;
+    }
+  });
+
+  if (!lib)
+    return WFS_ERR_INVALID_HSERVICE;
+
+  return lib->call< HRESULT >("WFPUnlock",hService,hWnd,*lpRequestID);
 }
 
 extern "C" HRESULT WINAPI WFMSetTraceLevel(HSERVICE hService, DWORD dwTraceLevel)
@@ -549,8 +933,6 @@ extern "C" BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID)
     case DLL_PROCESS_ATTACH:
       dllInstance = hinstDLL;
       mutexHandle = CreateMutex(NULL,FALSE,L"Global\\XFSPP_XFS_MANAGER_MUTEX");
-      memMapHandle = CreateFileMapping(INVALID_HANDLE_VALUE,NULL,0,0,1,L"Global\\XFSPP_XFS_MANAGER");
-      firstInstance = GetLastError() != ERROR_ALREADY_EXISTS;
       break;
     
     case DLL_PROCESS_DETACH:
