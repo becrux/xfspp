@@ -23,9 +23,9 @@ namespace Windows
     ~Library();
 
     template< typename R, typename... Args >
-    R call(const std::string &funcName, Args... args)
+    R call(LPCSTR funcName, Args... args)
     {
-      return reinterpret_cast< R (__stdcall *)(Args...) >(GetProcAddress(handle(),funcName.c_str()))(args...);
+      return reinterpret_cast< R (__stdcall *)(Args...) >(GetProcAddress(handle(),funcName))(args...);
     }
   };
 }

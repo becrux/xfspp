@@ -7,7 +7,6 @@ set(SOURCES
   ../win32/msgwnd.cpp
   ../win32/uuid.cpp
   ../win32/error.cpp
-  ../win32/shmem.cpp
   ../win32/library.cpp
   ../log/log.cpp
   ../common/version.cpp

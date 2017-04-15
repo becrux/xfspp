@@ -17,7 +17,7 @@ Uuid::Uuid()
   UuidCreate(&_uuid);
 }
 
-std::wstring Uuid::value() const
+std::wstring Uuid::value(const std::wstring &sPrefix) const
 {
   RPC_WSTR sUuid;
 
@@ -25,5 +25,5 @@ std::wstring Uuid::value() const
 
   UuidToString(&_uuid,&sUuid);
   
-  return std::wstring(reinterpret_cast< wchar_t * >(sUuid));
+  return sPrefix + std::wstring(reinterpret_cast< wchar_t * >(sUuid));
 }

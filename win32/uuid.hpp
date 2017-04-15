@@ -24,7 +24,7 @@ namespace Windows
   public:
     explicit Uuid();
 
-    std::wstring value() const;
+    std::wstring value(const std::wstring &sPrefix = std::wstring()) const;
   };
 }
 
