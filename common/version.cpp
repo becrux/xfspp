@@ -17,16 +17,16 @@ Version::Version(WORD wVersion) :
   _major(wVersion & 0xff),
   _minor((wVersion >> 8) & 0xff)
 {
-  
+
 }
 
 Version::Version(BYTE bMajor, BYTE bMinor) :
   _major(bMajor),
   _minor(bMinor)
 {
-  
+
 }
-  
+
 WORD Version::value() const
 {
   return (minor() << 8) | major();
@@ -51,7 +51,7 @@ Version Version::max(BYTE bMajor)
 {
   return Version(bMajor,std::numeric_limits< BYTE >::max());
 }
-    
+
 bool Version::operator<(const Version &o) const
 {
   return (major() < o.major()) || ((major() == o.major()) && (minor() < o.minor()));
@@ -65,7 +65,7 @@ bool Version::operator==(const Version &o) const
 std::ostream &XFS::operator<<(std::ostream &out, const Version &v)
 {
   out << v.major() << "." << std::setw(2) << std::setfill('0') << v.minor();
-  
+
   return out;
 }
 

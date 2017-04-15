@@ -76,20 +76,20 @@ Dispatcher::Dispatcher() :
       do
       {
         std::shared_ptr< TaskHelper > tH;
-        
+
         _queueSem.lock();
-        
+
         {
           MutexLocker locker(_mutex);
-        
+
           if (_queueList.empty())
             return;
-        
+
           DWORD id = _queueList.back();
           _queueList.pop_back();
 
           Log::Logger() << "selected id = " << id << ", " << _queueList.size() << " pending";
-            
+
           auto it = _queuedTasks.find(id);
           if (it != _queuedTasks.cend())
           {
@@ -98,7 +98,7 @@ Dispatcher::Dispatcher() :
             tH = it->second;
           }
         }
-        
+
         if (tH)
           tH->run();
       }
@@ -114,7 +114,7 @@ Dispatcher::Dispatcher() :
 Dispatcher::~Dispatcher()
 {
   ::Log::Method m(__FUNCSIG__);
-  
+
   {
     MutexLocker locker(_mutex);
 

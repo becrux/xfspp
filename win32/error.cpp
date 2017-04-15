@@ -14,7 +14,7 @@ Error::Error(DWORD iValue, DWORD iSuccessValue) :
   _value(iValue),
   _successValue(iSuccessValue)
 {
-    
+
 }
 
 DWORD Error::value() const

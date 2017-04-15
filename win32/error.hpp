@@ -18,12 +18,12 @@ namespace Windows
   {
     DWORD _value;
     DWORD _successValue;
-    
+
   public:
     explicit Error(DWORD value = GetLastError(), DWORD successValue = 0);
 
     DWORD value() const;
-    
+
     operator bool() const;
   };
 }

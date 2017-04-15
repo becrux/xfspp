@@ -24,6 +24,6 @@ std::wstring Uuid::value(const std::wstring &sPrefix) const
   MethodScope m([&sUuid] () { RpcStringFree(&sUuid); });
 
   UuidToString(&_uuid,&sUuid);
-  
+
   return sPrefix + std::wstring(reinterpret_cast< wchar_t * >(sUuid));
 }

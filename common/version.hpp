@@ -27,15 +27,15 @@ namespace XFS
   public:
     explicit Version(WORD wVersion);
     explicit Version(BYTE bMajor, BYTE bMinor);
-    
+
     WORD value() const;
 
     WORD major() const;
     WORD minor() const;
-    
+
     static Version min(BYTE bMajor);
     static Version max(BYTE bMajor);
-    
+
     bool operator<(const Version &o) const;
     bool operator==(const Version &o) const;
   };

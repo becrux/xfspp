@@ -37,7 +37,7 @@ namespace Windows
     ~MsgWnd();
 
     HWND handle() const;
-    
+
     void start();
     void close();
   };

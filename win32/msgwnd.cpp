@@ -66,7 +66,7 @@ void MsgWnd::start()
       {
         MSG msg;
         BOOL bRet;
-      
+
         while ((bRet = GetMessage(&msg,NULL,0,0)) != 0)
         {
           if (bRet == -1)

@@ -100,15 +100,15 @@ extern "C" BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID)
     case DLL_PROCESS_ATTACH:
       mutexHandle = CreateMutex(NULL,FALSE,NULL);
       /* no break here */
-    
+
     case DLL_THREAD_ATTACH:
       dllInstance = hinstDLL;
       break;
-    
+
     case DLL_PROCESS_DETACH:
       CloseHandle(mutexHandle);
       break;
-    
+
     default:
       break;
   }

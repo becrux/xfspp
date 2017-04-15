@@ -40,7 +40,7 @@ namespace
       SPData hServices[8192];
       bool handles[8192];
     };
-    
+
     AppData apps[64];
     DWORD pidTable[64] = { 0 };
   };
@@ -144,10 +144,10 @@ extern "C" HRESULT WINAPI WFSAsyncClose(HSERVICE hService, HWND hWnd, LPREQUESTI
   shMem.access([&ok, &lib, hService, lpRequestID] (ShMemLayout *p)
     {
       auto it = std::find(std::begin(p->pidTable),std::end(p->pidTable),GetCurrentProcessId());
-    
+
       if (it == std::end(p->pidTable))
         return;
-    
+
       ok = true;
       ShMemLayout::AppData::SPData &item = p->apps[std::distance(std::begin(p->pidTable),it)].hServices[hService - 1];
       lib = item.spLib;
@@ -172,12 +172,12 @@ extern "C" HRESULT WINAPI WFSCreateAppHandle(LPHAPP lphApp)
   shMem.access([&ok, lphApp] (ShMemLayout *p)
     {
       auto it = std::find(std::begin(p->pidTable),std::end(p->pidTable),GetCurrentProcessId());
-    
+
       if (ok = (it != std::end(p->pidTable)))
       {
         ShMemLayout::AppData &item = p->apps[std::distance(std::begin(p->pidTable),it)];
         auto ait = std::find(std::begin(item.handles),std::end(item.handles),false);
-    
+
         if (ait != std::end(item.handles))
         {
           *lphApp = reinterpret_cast< HAPP >(std::distance(std::begin(item.handles),ait) + 1);
@@ -237,10 +237,10 @@ extern "C" HRESULT WINAPI WFSAsyncDeregister(HSERVICE hService, DWORD dwEventCla
   shMem.access([&ok, &lib, hService, lpRequestID] (ShMemLayout *p)
     {
       auto it = std::find(std::begin(p->pidTable),std::end(p->pidTable),GetCurrentProcessId());
-    
+
       if (it == std::end(p->pidTable))
         return;
-    
+
       ok = true;
       ShMemLayout::AppData::SPData &item = p->apps[std::distance(std::begin(p->pidTable),it)].hServices[hService - 1];
       lib = item.spLib;
@@ -267,7 +267,7 @@ extern "C" HRESULT WINAPI WFSDestroyAppHandle(HAPP hApp)
   shMem.access([&ok, &idx] (ShMemLayout *p)
     {
       auto it = std::find(std::begin(p->pidTable),std::end(p->pidTable),GetCurrentProcessId());
-    
+
       if (ok = (it != std::end(p->pidTable)))
       {
         ShMemLayout::AppData &item = p->apps[std::distance(std::begin(p->pidTable),it)];
@@ -327,10 +327,10 @@ extern "C" HRESULT WINAPI WFSAsyncExecute(HSERVICE hService, DWORD dwCommand, LP
   shMem.access([&ok, &lib, hService, lpRequestID] (ShMemLayout *p)
     {
       auto it = std::find(std::begin(p->pidTable),std::end(p->pidTable),GetCurrentProcessId());
-    
+
       if (it == std::end(p->pidTable))
         return;
-    
+
       ok = true;
       ShMemLayout::AppData::SPData &item = p->apps[std::distance(std::begin(p->pidTable),it)].hServices[hService - 1];
       lib = item.spLib;
@@ -395,10 +395,10 @@ extern "C" HRESULT WINAPI WFSAsyncGetInfo(HSERVICE hService, DWORD dwCategory, L
   shMem.access([&ok, &lib, hService, lpRequestID] (ShMemLayout *p)
     {
       auto it = std::find(std::begin(p->pidTable),std::end(p->pidTable),GetCurrentProcessId());
-    
+
       if (it == std::end(p->pidTable))
         return;
-    
+
       ok = true;
       ShMemLayout::AppData::SPData &item = p->apps[std::distance(std::begin(p->pidTable),it)].hServices[hService - 1];
       lib = item.spLib;
@@ -467,10 +467,10 @@ extern "C" HRESULT WINAPI WFSAsyncLock(HSERVICE hService, DWORD dwTimeOut, HWND 
   shMem.access([&ok, &lib, hService, lpRequestID] (ShMemLayout *p)
     {
       auto it = std::find(std::begin(p->pidTable),std::end(p->pidTable),GetCurrentProcessId());
-    
+
       if (it == std::end(p->pidTable))
         return;
-    
+
       ok = true;
       ShMemLayout::AppData::SPData &item = p->apps[std::distance(std::begin(p->pidTable),it)].hServices[hService - 1];
       lib = item.spLib;
@@ -538,7 +538,7 @@ extern "C" HRESULT WINAPI WFSAsyncOpen(LPSTR lpszLogicalName, HAPP hApp, LPSTR l
   shMem.access([&ok, &lib, &hApp, lphService, lpRequestID] (ShMemLayout *p)
     {
       auto it = std::find(std::begin(p->pidTable),std::end(p->pidTable),GetCurrentProcessId());
-    
+
       if (it == std::end(p->pidTable))
         return;
 
@@ -551,7 +551,7 @@ extern "C" HRESULT WINAPI WFSAsyncOpen(LPSTR lpszLogicalName, HAPP hApp, LPSTR l
         hApp = NULL;
         return;
       }
-    
+
       auto sit = std::find_if(std::begin(item.hServices),std::end(item.hServices),[] (const auto &x) { return x.reqId == 0; });
       if (sit == std::end(item.hServices))
         return;
@@ -629,10 +629,10 @@ extern "C" HRESULT WINAPI WFSAsyncRegister(HSERVICE hService, DWORD dwEventClass
   shMem.access([&ok, &lib, hService, lpRequestID] (ShMemLayout *p)
     {
       auto it = std::find(std::begin(p->pidTable),std::end(p->pidTable),GetCurrentProcessId());
-    
+
       if (it == std::end(p->pidTable))
         return;
-    
+
       ok = true;
       ShMemLayout::AppData::SPData &item = p->apps[std::distance(std::begin(p->pidTable),it)].hServices[hService - 1];
       lib = item.spLib;
@@ -754,10 +754,10 @@ extern "C" HRESULT WINAPI WFSAsyncUnlock(HSERVICE hService, HWND hWnd, LPREQUEST
   shMem.access([&ok, &lib, hService, lpRequestID] (ShMemLayout *p)
     {
       auto it = std::find(std::begin(p->pidTable),std::end(p->pidTable),GetCurrentProcessId());
-    
+
       if (it == std::end(p->pidTable))
         return;
-    
+
       ok = true;
       ShMemLayout::AppData::SPData &item = p->apps[std::distance(std::begin(p->pidTable),it)].hServices[hService - 1];
       lib = item.spLib;
@@ -794,7 +794,7 @@ extern "C" HRESULT WINAPI WFMAllocateBuffer(ULONG ulSize, ULONG ulFlags, LPVOID 
     return WFS_ERR_OUT_OF_MEMORY;
 
   allocMap->emplace(*lppvData,std::list< void * >());
-    
+
   return WFS_SUCCESS;
 }
 
@@ -926,12 +926,12 @@ extern "C" BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID)
       dllInstance = hinstDLL;
       mutexHandle = CreateMutex(NULL,FALSE,L"Global\\XFSPP_XFS_MANAGER_MUTEX");
       break;
-    
+
     case DLL_PROCESS_DETACH:
       CloseHandle(mutexHandle);
       delete allocMap;
       break;
-    
+
     default:
       break;
   }

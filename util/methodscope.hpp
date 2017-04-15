@@ -26,16 +26,16 @@ public:
     _f(std::move(o._f)) { }
 
   ~MethodScope()
-    {
-      if (_f)
-        _f();
-    }
+  {
+    if (_f)
+      _f();
+  }
 
   MethodScope &operator=(MethodScope &&o)
-    {
-      _f = std::move(o._f);
-      return *this;
-    }
+  {
+    _f = std::move(o._f);
+    return *this;
+  }
 };
 
 #endif

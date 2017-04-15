@@ -27,23 +27,23 @@ namespace Windows
 
       void lock();
     };
-  
+
     class Mutex : public Lockable
     {
     public:
       explicit Mutex(const std::wstring &sName = std::wstring());
-  
+
       void unlock();
     };
-  
+
     class Semaphore : public Lockable
     {
     public:
       explicit Semaphore(LONG start, LONG max);
-  
+
       void unlock();
     };
-  
+
     class Event : public Handle<>
     {
     public:
@@ -52,7 +52,7 @@ namespace Windows
       void waitFor();
       void set();
     };
-  
+
     template< typename T >
     class Locker
     {
@@ -60,7 +60,7 @@ namespace Windows
 
       Locker(const Locker &);
       Locker &operator=(const Locker &);
-  
+
     public:
       explicit Locker(T &ref) : _ref(ref) { _ref.lock(); }
       ~Locker() { _ref.unlock(); }
@@ -73,7 +73,7 @@ namespace Windows
 
       Locker(const Locker &);
       Locker &operator=(const Locker &);
-  
+
     public:
       explicit Locker(HANDLE ref) : _ref(ref) { WaitForSingleObjectEx(_ref,INFINITE,FALSE); }
       Locker(Locker &&o) :

@@ -22,7 +22,7 @@ namespace Windows
   {
     class Value
     {
-      
+
     };
 
     class Key : public Handle< HKEY,LSTATUS >
@@ -40,9 +40,9 @@ namespace Windows
 
       Error remove(const std::wstring &sSubPath);
       Error removeValue(const std::wstring &sValueName);
-      
+
       Error setValue(const std::wstring &sValueName,DWORD type, const std::vector< BYTE > &newValue);
-    };    
+    };
   }
 }
 

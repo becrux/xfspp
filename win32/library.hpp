@@ -17,7 +17,7 @@
 namespace Windows
 {
   class Library : public Handle< HMODULE >
-  { 
+  {
   public:
     explicit Library(const std::wstring &sLibPath);
     ~Library();
