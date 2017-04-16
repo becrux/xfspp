@@ -42,7 +42,7 @@ namespace
     };
 
     AppData apps[64];
-    DWORD pidTable[64] = { 0 };
+    DWORD pidTable[64];
   };
 
   HINSTANCE dllInstance;
@@ -552,7 +552,7 @@ extern "C" HRESULT WINAPI WFSAsyncOpen(LPSTR lpszLogicalName, HAPP hApp, LPSTR l
         return;
       }
 
-      auto sit = std::find_if(std::begin(item.hServices),std::end(item.hServices),[] (const auto &x) { return x.reqId == 0; });
+      auto sit = std::find_if(std::begin(item.hServices),std::end(item.hServices),[] (const ShMemLayout::AppData::SPData &x) { return x.reqId == 0; });
       if (sit == std::end(item.hServices))
         return;
 
