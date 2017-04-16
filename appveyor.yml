@@ -42,7 +42,7 @@ environment:
 
 install:
   - if [%PLATFORM%]==[MinGW-w64] rename "C:\Program Files\Git\usr\bin\sh.exe" "sh2.exe"
-  - if [%PLATFORM%]==[MinGW-w64] curl -fsSL -o mw32.7z "http://downloads.sourceforge.net/mingw-w64/Toolchains%20targetting%20Win32/Personal%20Builds/mingw-builds/4.9.3/threads-win32/sjlj/i686-4.9.3-release-win32-sjlj-rt_v4-rev1.7z"
+  - if [%PLATFORM%]==[MinGW-w64] ps: (New-Object Net.WebClient).DownloadFile("http://downloads.sourceforge.net/mingw-w64/Toolchains%20targetting%20Win32/Personal%20Builds/mingw-builds/4.8.5/threads-win32/sjlj/i686-4.8.5-release-win32-sjlj-rt_v4-rev0.7z", "$env:mw32.7z")
   - if [%PLATFORM%]==[MinGW-w64] 7z x -oC:\ mw32.7z > NUL
   - if [%PLATFORM%]==[MinGW-w64] set PATH=C:\mingw32\bin;%PATH%
 
