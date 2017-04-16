@@ -61,6 +61,37 @@ namespace
   if (!ok) \
     return WFS_ERR_NOT_STARTED;
 
+#define GET_LIB_AND_REQUEST \
+  if (!hService) \
+    return WFS_ERR_INVALID_HSERVICE; \
+  \
+  if (!hWnd) \
+    return WFS_ERR_INVALID_HWND; \
+  \
+  if (!lpRequestID) \
+    return WFS_ERR_INVALID_POINTER; \
+  \
+  bool ok = false; \
+  Windows::Library *lib = nullptr; \
+  shMem.access([&ok, &lib, hService, lpRequestID] (ShMemLayout *p) \
+    { \
+      auto it = std::find(std::begin(p->pidTable),std::end(p->pidTable),GetCurrentProcessId()); \
+      \
+      if (it == std::end(p->pidTable)) \
+        return; \
+      \
+      ok = true; \
+      ShMemLayout::AppData::SPData &item = p->apps[std::distance(std::begin(p->pidTable),it)].hServices[hService - 1]; \
+      lib = item.spLib; \
+      *lpRequestID = item.reqId++; \
+    }); \
+  \
+  if (!ok) \
+    return WFS_ERR_NOT_STARTED; \
+  \
+  if (!lib) \
+    return WFS_ERR_INVALID_HSERVICE;
+
 extern "C" HRESULT WINAPI WFSCancelAsyncRequest(HSERVICE hService, REQUESTID RequestID)
 {
   if (!hService)
@@ -130,35 +161,7 @@ extern "C" HRESULT WINAPI WFSClose(HSERVICE hService)
 
 extern "C" HRESULT WINAPI WFSAsyncClose(HSERVICE hService, HWND hWnd, LPREQUESTID lpRequestID)
 {
-  if (!hService)
-    return WFS_ERR_INVALID_HSERVICE;
-
-  if (!hWnd)
-    return WFS_ERR_INVALID_HWND;
-
-  if (!lpRequestID)
-    return WFS_ERR_INVALID_POINTER;
-
-  bool ok = false;
-  Windows::Library *lib = nullptr;
-  shMem.access([&ok, &lib, hService, lpRequestID] (ShMemLayout *p)
-    {
-      auto it = std::find(std::begin(p->pidTable),std::end(p->pidTable),GetCurrentProcessId());
-
-      if (it == std::end(p->pidTable))
-        return;
-
-      ok = true;
-      ShMemLayout::AppData::SPData &item = p->apps[std::distance(std::begin(p->pidTable),it)].hServices[hService - 1];
-      lib = item.spLib;
-      *lpRequestID = item.reqId++;
-    });
-
-  if (!ok)
-    return WFS_ERR_NOT_STARTED;
-
-  if (!lib)
-    return WFS_ERR_INVALID_HSERVICE;
+  GET_LIB_AND_REQUEST
 
   return lib->call< HRESULT >("WFPClose",hService,hWnd,*lpRequestID);
 }
@@ -220,38 +223,10 @@ extern "C" HRESULT WINAPI WFSDeregister(HSERVICE hService, DWORD dwEventClass, H
 
 extern "C" HRESULT WINAPI WFSAsyncDeregister(HSERVICE hService, DWORD dwEventClass, HWND hWndReg, HWND hWnd, LPREQUESTID lpRequestID)
 {
-  if (!hService)
-    return WFS_ERR_INVALID_HSERVICE;
-
   if (!hWndReg)
     return WFS_ERR_INVALID_HWNDREG;
 
-  if (!hWnd)
-    return WFS_ERR_INVALID_HWND;
-
-  if (!lpRequestID)
-    return WFS_ERR_INVALID_POINTER;
-
-  bool ok = false;
-  Windows::Library *lib = nullptr;
-  shMem.access([&ok, &lib, hService, lpRequestID] (ShMemLayout *p)
-    {
-      auto it = std::find(std::begin(p->pidTable),std::end(p->pidTable),GetCurrentProcessId());
-
-      if (it == std::end(p->pidTable))
-        return;
-
-      ok = true;
-      ShMemLayout::AppData::SPData &item = p->apps[std::distance(std::begin(p->pidTable),it)].hServices[hService - 1];
-      lib = item.spLib;
-      *lpRequestID = item.reqId++;
-    });
-
-  if (!ok)
-    return WFS_ERR_NOT_STARTED;
-
-  if (!lib)
-    return WFS_ERR_INVALID_HSERVICE;
+  GET_LIB_AND_REQUEST
 
   return lib->call< HRESULT >("WFPDeregister",hService,dwEventClass,hWndReg,hWnd,*lpRequestID);
 }
@@ -313,35 +288,7 @@ extern "C" HRESULT WINAPI WFSExecute(HSERVICE hService, DWORD dwCommand, LPVOID 
 
 extern "C" HRESULT WINAPI WFSAsyncExecute(HSERVICE hService, DWORD dwCommand, LPVOID lpCmdData, DWORD dwTimeOut, HWND hWnd, LPREQUESTID lpRequestID)
 {
-  if (!hService)
-    return WFS_ERR_INVALID_HSERVICE;
-
-  if (!hWnd)
-    return WFS_ERR_INVALID_HWND;
-
-  if (!lpRequestID)
-    return WFS_ERR_INVALID_POINTER;
-
-  bool ok = false;
-  Windows::Library *lib = nullptr;
-  shMem.access([&ok, &lib, hService, lpRequestID] (ShMemLayout *p)
-    {
-      auto it = std::find(std::begin(p->pidTable),std::end(p->pidTable),GetCurrentProcessId());
-
-      if (it == std::end(p->pidTable))
-        return;
-
-      ok = true;
-      ShMemLayout::AppData::SPData &item = p->apps[std::distance(std::begin(p->pidTable),it)].hServices[hService - 1];
-      lib = item.spLib;
-      *lpRequestID = item.reqId++;
-    });
-
-  if (!ok)
-    return WFS_ERR_NOT_STARTED;
-
-  if (!lib)
-    return WFS_ERR_INVALID_HSERVICE;
+  GET_LIB_AND_REQUEST
 
   return lib->call< HRESULT >("WFPExecute",hService,dwCommand,lpCmdData,dwTimeOut,hWnd,*lpRequestID);
 }
@@ -381,35 +328,7 @@ extern "C" HRESULT WINAPI WFSGetInfo(HSERVICE hService, DWORD dwCategory, LPVOID
 
 extern "C" HRESULT WINAPI WFSAsyncGetInfo(HSERVICE hService, DWORD dwCategory, LPVOID lpQueryDetails, DWORD dwTimeOut, HWND hWnd, LPREQUESTID lpRequestID)
 {
-  if (!hService)
-    return WFS_ERR_INVALID_HSERVICE;
-
-  if (!hWnd)
-    return WFS_ERR_INVALID_HWND;
-
-  if (!lpRequestID)
-    return WFS_ERR_INVALID_POINTER;
-
-  bool ok = false;
-  Windows::Library *lib = nullptr;
-  shMem.access([&ok, &lib, hService, lpRequestID] (ShMemLayout *p)
-    {
-      auto it = std::find(std::begin(p->pidTable),std::end(p->pidTable),GetCurrentProcessId());
-
-      if (it == std::end(p->pidTable))
-        return;
-
-      ok = true;
-      ShMemLayout::AppData::SPData &item = p->apps[std::distance(std::begin(p->pidTable),it)].hServices[hService - 1];
-      lib = item.spLib;
-      *lpRequestID = item.reqId++;
-    });
-
-  if (!ok)
-    return WFS_ERR_NOT_STARTED;
-
-  if (!lib)
-    return WFS_ERR_INVALID_HSERVICE;
+  GET_LIB_AND_REQUEST
 
   return lib->call< HRESULT >("WFPGetInfo",hService,dwCategory,lpQueryDetails,dwTimeOut,hWnd,*lpRequestID);
 }
@@ -453,35 +372,7 @@ extern "C" HRESULT WINAPI WFSLock(HSERVICE hService, DWORD dwTimeOut, LPWFSRESUL
 
 extern "C" HRESULT WINAPI WFSAsyncLock(HSERVICE hService, DWORD dwTimeOut, HWND hWnd, LPREQUESTID lpRequestID)
 {
-  if (!hService)
-    return WFS_ERR_INVALID_HSERVICE;
-
-  if (!hWnd)
-    return WFS_ERR_INVALID_HWND;
-
-  if (!lpRequestID)
-    return WFS_ERR_INVALID_POINTER;
-
-  bool ok = false;
-  Windows::Library *lib = nullptr;
-  shMem.access([&ok, &lib, hService, lpRequestID] (ShMemLayout *p)
-    {
-      auto it = std::find(std::begin(p->pidTable),std::end(p->pidTable),GetCurrentProcessId());
-
-      if (it == std::end(p->pidTable))
-        return;
-
-      ok = true;
-      ShMemLayout::AppData::SPData &item = p->apps[std::distance(std::begin(p->pidTable),it)].hServices[hService - 1];
-      lib = item.spLib;
-      *lpRequestID = item.reqId++;
-    });
-
-  if (!ok)
-    return WFS_ERR_NOT_STARTED;
-
-  if (!lib)
-    return WFS_ERR_INVALID_HSERVICE;
+  GET_LIB_AND_REQUEST
 
   return lib->call< HRESULT >("WFPLock",hService,dwTimeOut,hWnd,*lpRequestID);
 }
@@ -612,38 +503,10 @@ extern "C" HRESULT WINAPI WFSRegister(HSERVICE hService, DWORD dwEventClass, HWN
 
 extern "C" HRESULT WINAPI WFSAsyncRegister(HSERVICE hService, DWORD dwEventClass, HWND hWndReg, HWND hWnd, LPREQUESTID lpRequestID)
 {
-  if (!hService)
-    return WFS_ERR_INVALID_HSERVICE;
-
-  if (!hWnd)
-    return WFS_ERR_INVALID_HWND;
-
   if (!hWndReg)
     return WFS_ERR_INVALID_HWNDREG;
 
-  if (!lpRequestID)
-    return WFS_ERR_INVALID_POINTER;
-
-  bool ok = false;
-  Windows::Library *lib = nullptr;
-  shMem.access([&ok, &lib, hService, lpRequestID] (ShMemLayout *p)
-    {
-      auto it = std::find(std::begin(p->pidTable),std::end(p->pidTable),GetCurrentProcessId());
-
-      if (it == std::end(p->pidTable))
-        return;
-
-      ok = true;
-      ShMemLayout::AppData::SPData &item = p->apps[std::distance(std::begin(p->pidTable),it)].hServices[hService - 1];
-      lib = item.spLib;
-      *lpRequestID = item.reqId++;
-    });
-
-  if (!ok)
-    return WFS_ERR_NOT_STARTED;
-
-  if (!lib)
-    return WFS_ERR_INVALID_HSERVICE;
+  GET_LIB_AND_REQUEST
 
   return lib->call< HRESULT >("WFPRegister",hService,dwEventClass,hWndReg,hWnd,*lpRequestID);
 }
@@ -740,35 +603,7 @@ extern "C" HRESULT WINAPI WFSUnlock(HSERVICE hService)
 
 extern "C" HRESULT WINAPI WFSAsyncUnlock(HSERVICE hService, HWND hWnd, LPREQUESTID lpRequestID)
 {
-  if (!hService)
-    return WFS_ERR_INVALID_HSERVICE;
-
-  if (!hWnd)
-    return WFS_ERR_INVALID_HWND;
-
-  if (!lpRequestID)
-    return WFS_ERR_INVALID_POINTER;
-
-  bool ok = false;
-  Windows::Library *lib = nullptr;
-  shMem.access([&ok, &lib, hService, lpRequestID] (ShMemLayout *p)
-    {
-      auto it = std::find(std::begin(p->pidTable),std::end(p->pidTable),GetCurrentProcessId());
-
-      if (it == std::end(p->pidTable))
-        return;
-
-      ok = true;
-      ShMemLayout::AppData::SPData &item = p->apps[std::distance(std::begin(p->pidTable),it)].hServices[hService - 1];
-      lib = item.spLib;
-      *lpRequestID = item.reqId++;
-    });
-
-  if (!ok)
-    return WFS_ERR_NOT_STARTED;
-
-  if (!lib)
-    return WFS_ERR_INVALID_HSERVICE;
+  GET_LIB_AND_REQUEST
 
   return lib->call< HRESULT >("WFPUnlock",hService,hWnd,*lpRequestID);
 }

@@ -20,17 +20,24 @@
 
 namespace Windows
 {
-  template< typename T >
-  class SharedMemory : private Uuid, public Handle<>
+  class RawSharedMemory : private Uuid, public Handle<>
   {
     Synch::Mutex _m;
     LPVOID _ptr;
 
   public:
+    explicit RawSharedMemory(DWORD dwSize);
+    ~RawSharedMemory();
+
+    void access(std::function< void(LPVOID) > f);
+  };
+
+  template< typename T >
+  class SharedMemory : private RawSharedMemory
+  {
+  public:
     explicit SharedMemory() :
-      Handle<>(CreateFileMapping(INVALID_HANDLE_VALUE,NULL,PAGE_READWRITE,0,sizeof(T),value(L"Global\\XFSPP_XFS_MANAGER_SHMEM_").c_str())),
-      _m(value(L"Global\\XFSPP_XFS_MANAGER_SHMEM_MUTEX_")),
-      _ptr(MapViewOfFileEx(handle(),FILE_MAP_ALL_ACCESS,0,0,0,NULL))
+      RawSharedMemory(sizeof(T))
     {
       ::Log::Method m(__FUNCSIG__);
     }
@@ -38,15 +45,14 @@ namespace Windows
     ~SharedMemory()
     {
       ::Log::Method m(__FUNCSIG__);
-
-      UnmapViewOfFile(_ptr);
     }
 
     void access(std::function< void(T *) > f)
     {
-      Synch::Locker< Synch::Mutex > lock(_m);
-
-      f(reinterpret_cast< T * >(_ptr));
+      RawSharedMemory::access([f] (LPVOID ptr)
+        {
+          f(reinterpret_cast< T * >(ptr));
+        });
     }
   };
 }

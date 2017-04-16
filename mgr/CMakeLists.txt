@@ -8,6 +8,7 @@ set(SOURCES
   ../win32/uuid.cpp
   ../win32/error.cpp
   ../win32/library.cpp
+  ../win32/shmem.cpp
   ../log/log.cpp
   ../common/version.cpp
   main.cpp
