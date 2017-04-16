@@ -2,34 +2,42 @@ environment:
   matrix:
     - GENERATOR: "Visual Studio 11 2012"
       PLATFORM: MSVC
+      TOOLSET: "v120_CTP_Nov2012"
       CONFIG: Debug
 
     - GENERATOR: "Visual Studio 11 2012"
       PLATFORM: MSVC
+      TOOLSET: "v120_CTP_Nov2012"
       CONFIG: Release
 
     - GENERATOR: "Visual Studio 11 2012 Win64"
       PLATFORM: MSVC
+      TOOLSET: "v120_CTP_Nov2012"
       CONFIG: Debug
 
     - GENERATOR: "Visual Studio 11 2012 Win64"
       PLATFORM: MSVC
+      TOOLSET: "v120_CTP_Nov2012"
       CONFIG: Release
 
     - GENERATOR: "Visual Studio 14 2015"
       PLATFORM: MSVC
+      TOOLSET: "v140"
       CONFIG: Debug
 
     - GENERATOR: "Visual Studio 14 2015"
       PLATFORM: MSVC
+      TOOLSET: "v140"
       CONFIG: Release
 
     - GENERATOR: "Visual Studio 14 2015 Win64"
       PLATFORM: MSVC
+      TOOLSET: "v140"
       CONFIG: Debug
 
     - GENERATOR: "Visual Studio 14 2015 Win64"
       PLATFORM: MSVC
+      TOOLSET: "v140"
       CONFIG: Release
 
     - GENERATOR: "MinGW Makefiles"
@@ -42,12 +50,13 @@ environment:
 
 install:
   - if [%PLATFORM%]==[MinGW-w64] rename "C:\Program Files\Git\usr\bin\sh.exe" "sh2.exe"
-  - if [%PLATFORM%]==[MinGW-w64] call bin\appveyor-download.cmd "https://sourceforge.net/projects/mingw-w64/files/Toolchains%20targetting%20Win32/Personal%20Builds/mingw-builds/4.9.3/threads-win32/sjlj/i686-4.9.3-release-win32-sjlj-rt_v4-rev1.7z/download" -FileName mw32.7z
+  - if [%PLATFORM%]==[MinGW-w64] appveyor DownloadFile "https://sourceforge.net/projects/mingw-w64/files/Toolchains%20targetting%20Win32/Personal%20Builds/mingw-builds/4.9.3/threads-win32/sjlj/i686-4.9.3-release-win32-sjlj-rt_v4-rev1.7z/download" -FileName mw32.7z
   - if [%PLATFORM%]==[MinGW-w64] 7z x -oC:\ mw32.7z > NUL
   - if [%PLATFORM%]==[MinGW-w64] set PATH=C:\mingw32\bin;%PATH%
 
 build_script:
   - mkdir build
   - cd build
-  - cmake -G "%GENERATOR%" ..
+  - if [%PLATFORM%]==[MSVC] cmake -G "%GENERATOR%" -T "%TOOLSET%" ..
+  - if [%PLATFORM%]==[MinGW-w64] cmake -G "%GENERATOR%" ..
   - cmake --build . --config "%CONFIG%"
