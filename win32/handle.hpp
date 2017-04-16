@@ -16,7 +16,7 @@
 
 namespace Windows
 {
-  inline BOOL _stdcall nullCloseHandle(HANDLE) { return TRUE; }
+  inline BOOL __stdcall nullCloseHandle(HANDLE) { return TRUE; }
 
   template< typename T = HANDLE, typename R = BOOL >
   class Handle
@@ -26,7 +26,7 @@ namespace Windows
 
     T _h;
     Error _lastError;
-    R (_stdcall *_closeF)(T);
+    R ((__stdcall *_closeF))(T);
 
     void setLastError()
     {
@@ -41,7 +41,7 @@ namespace Windows
     }
 
     explicit Handle(T h = NULL,
-                    R (_stdcall *closeF)(T) = CloseHandle) :
+                    R ((__stdcall *closeF))(T) = CloseHandle) :
       _h(h),
       _closeF(closeF)
     {
