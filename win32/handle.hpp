@@ -52,8 +52,8 @@ namespace Windows
     Handle(Handle &&o) :
       _h(o._h),
       _lastError(o._lastError)
-      _closeF(o._closeF)
     {
+      _closeF = o._closeF;
       o._h = NULL;
       o._lastError = ERROR_SUCCESS;
     }
