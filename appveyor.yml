@@ -1,18 +1,18 @@
 environment:
   matrix:
-    - GENERATOR: "Visual Studio 12"
+    - GENERATOR: "Visual Studio 11 2012"
       PLATFORM: MSVC
       CONFIG: Debug
 
-    - GENERATOR: "Visual Studio 12"
+    - GENERATOR: "Visual Studio 11 2012"
       PLATFORM: MSVC
       CONFIG: Release
 
-    - GENERATOR: "Visual Studio 12 Win64"
+    - GENERATOR: "Visual Studio 11 2012 Win64"
       PLATFORM: MSVC
       CONFIG: Debug
 
-    - GENERATOR: "Visual Studio 12 Win64"
+    - GENERATOR: "Visual Studio 11 2012 Win64"
       PLATFORM: MSVC
       CONFIG: Release
 
@@ -49,5 +49,5 @@ install:
 build_script:
   - mkdir build
   - cd build
-  - cmake "-G %GENERATOR%" ..
+  - cmake -G "%GENERATOR%" ..
   - cmake --build . --config "%CONFIG%"
