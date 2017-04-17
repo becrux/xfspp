@@ -176,7 +176,7 @@ extern "C" HRESULT WINAPI WFSCreateAppHandle(LPHAPP lphApp)
     {
       auto it = std::find(std::begin(p->pidTable),std::end(p->pidTable),GetCurrentProcessId());
 
-      if (ok = (it != std::end(p->pidTable)))
+      if ((ok = (it != std::end(p->pidTable))))
       {
         ShMemLayout::AppData &item = p->apps[std::distance(std::begin(p->pidTable),it)];
         auto ait = std::find(std::begin(item.handles),std::end(item.handles),false);
@@ -243,7 +243,7 @@ extern "C" HRESULT WINAPI WFSDestroyAppHandle(HAPP hApp)
     {
       auto it = std::find(std::begin(p->pidTable),std::end(p->pidTable),GetCurrentProcessId());
 
-      if (ok = (it != std::end(p->pidTable)))
+      if ((ok = (it != std::end(p->pidTable))))
       {
         ShMemLayout::AppData &item = p->apps[std::distance(std::begin(p->pidTable),it)];
         if (item.handles[idx])
