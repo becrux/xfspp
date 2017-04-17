@@ -23,7 +23,11 @@ std::wstring Uuid::value(const std::wstring &sPrefix) const
 
   MethodScope m([&sUuid] () { RpcStringFree(&sUuid); });
 
+#if defined(__GNUC__)
+  UuidToString(const_cast< UUID * >(&_uuid),&sUuid);
+#else
   UuidToString(&_uuid,&sUuid);
+#endif
 
   return sPrefix + std::wstring(reinterpret_cast< wchar_t * >(sUuid));
 }

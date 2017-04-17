@@ -30,7 +30,7 @@ Mutex::Mutex(const std::wstring &sName) :
 void Mutex::unlock()
 {
   ReleaseMutex(handle());
-};
+}
 
 Semaphore::Semaphore(LONG start, LONG max) :
   Lockable(CreateSemaphore(NULL,start,max,NULL))
