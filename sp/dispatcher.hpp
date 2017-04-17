@@ -70,4 +70,6 @@ public:
   friend std::ostream &operator<<(std::ostream &out, TaskHelper::CompletionEvent state);
 };
 
+std::ostream &operator<<(std::ostream &out, Dispatcher::TaskHelper::CompletionEvent state);
+
 #endif
