@@ -39,12 +39,12 @@ namespace Windows
     explicit SharedMemory() :
       RawSharedMemory(sizeof(T))
     {
-      ::Log::Method m(__FUNCSIG__);
+      ::Log::Method m(__SIGNATURE__);
     }
 
     ~SharedMemory()
     {
-      ::Log::Method m(__FUNCSIG__);
+      ::Log::Method m(__SIGNATURE__);
     }
 
     void access(std::function< void(T *) > f)

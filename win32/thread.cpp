@@ -16,21 +16,21 @@ Thread::Thread(std::function< void () > f) :
   _joined(false),
   _f(f)
 {
-  ::Log::Method m(__FUNCSIG__);
+  ::Log::Method m(__SIGNATURE__);
 
   setHandle(CreateThread(NULL,0,threadProc,reinterpret_cast< LPVOID >(this),0,NULL));
 }
 
 Thread::~Thread()
 {
-  ::Log::Method m(__FUNCSIG__);
+  ::Log::Method m(__SIGNATURE__);
 
   join();
 }
 
 void Thread::join()
 {
-  ::Log::Method m(__FUNCSIG__);
+  ::Log::Method m(__SIGNATURE__);
 
   if (_joined)
     return;
@@ -43,7 +43,7 @@ void Thread::join()
 
 DWORD WINAPI Thread::threadProc(LPVOID lpParameter)
 {
-  ::Log::Method m(__FUNCSIG__);
+  ::Log::Method m(__SIGNATURE__);
 
   reinterpret_cast< Thread * >(lpParameter)->_f();
 

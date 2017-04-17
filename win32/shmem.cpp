@@ -15,19 +15,19 @@ RawSharedMemory::RawSharedMemory(DWORD dwSize) :
   _m(value(L"Global\\XFSPP_XFS_MANAGER_SHMEM_MUTEX_")),
   _ptr(MapViewOfFileEx(handle(),FILE_MAP_ALL_ACCESS,0,0,0,NULL))
 {
-  ::Log::Method m(__FUNCSIG__);
+  ::Log::Method m(__SIGNATURE__);
 }
 
 RawSharedMemory::~RawSharedMemory()
 {
-  ::Log::Method m(__FUNCSIG__);
+  ::Log::Method m(__SIGNATURE__);
 
   UnmapViewOfFile(_ptr);
 }
 
 void RawSharedMemory::access(std::function< void(LPVOID) > f)
 {
-  ::Log::Method m(__FUNCSIG__);
+  ::Log::Method m(__SIGNATURE__);
 
   Synch::Locker< Synch::Mutex > lock(_m);
 

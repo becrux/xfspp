@@ -18,6 +18,12 @@
 #define LOG_STRING(...) static_cast< std::ostringstream && >(std::ostringstream() << __VA_ARGS__).str()
 #define __LAMBDA_FUNCSIG__(sig) "__LAMBDA__[" ## sig ## "]"
 
+#if defined(__GNUC__)
+  #define __SIGNATURE__ __PRETTY_FUNCTION__
+#else
+  #define __SIGNATURE__ __FUNCSIG__
+#endif
+
 namespace Log
 {
   class Logger: public std::ostringstream

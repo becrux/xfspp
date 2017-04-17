@@ -21,21 +21,21 @@ Timer::Timer(int timeout, std::function< void () > f) :
         f();
     })
 {
-  ::Log::Method(__FUNCSIG__,LOG_STRING("timeout = " << timeout));
+  ::Log::Method(__SIGNATURE__,LOG_STRING("timeout = " << timeout));
 
   setHandle(_thread.handle());
 }
 
 Timer::~Timer()
 {
-  ::Log::Method m(__FUNCSIG__);
+  ::Log::Method m(__SIGNATURE__);
 
   cancel();
 }
 
 void Timer::cancel()
 {
-  ::Log::Method m(__FUNCSIG__);
+  ::Log::Method m(__SIGNATURE__);
 
   _cancelEvent.set();
 }

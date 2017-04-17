@@ -14,10 +14,10 @@ using namespace Windows;
 Library::Library(const std::wstring &sLibPath) :
   Handle< HMODULE >(LoadLibraryEx(sLibPath.c_str(),NULL,0),FreeLibrary)
 {
-  ::Log::Method m(__FUNCSIG__);
+  ::Log::Method m(__SIGNATURE__);
 }
 
 Library::~Library()
 {
-  ::Log::Method m(__FUNCSIG__);
+  ::Log::Method m(__SIGNATURE__);
 }
