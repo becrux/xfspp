@@ -3,50 +3,62 @@ environment:
     - GENERATOR: "Visual Studio 12 2013"
       PLATFORM: MSVC
       CONFIG: Debug
+      CMAKE_OPTIONS: ""
 
     - GENERATOR: "Visual Studio 12 2013"
       PLATFORM: MSVC
       CONFIG: Release
+      CMAKE_OPTIONS: ""
 
     - GENERATOR: "Visual Studio 12 2013 Win64"
       PLATFORM: MSVC
       CONFIG: Debug
+      CMAKE_OPTIONS: ""
 
     - GENERATOR: "Visual Studio 12 2013 Win64"
       PLATFORM: MSVC
       CONFIG: Release
+      CMAKE_OPTIONS: ""
 
     - GENERATOR: "Visual Studio 14 2015"
       PLATFORM: MSVC
       CONFIG: Debug
+      CMAKE_OPTIONS: ""
 
     - GENERATOR: "Visual Studio 14 2015"
       PLATFORM: MSVC
       CONFIG: Release
+      CMAKE_OPTIONS: ""
 
     - GENERATOR: "Visual Studio 14 2015 Win64"
       PLATFORM: MSVC
       CONFIG: Debug
+      CMAKE_OPTIONS: ""
 
     - GENERATOR: "Visual Studio 14 2015 Win64"
       PLATFORM: MSVC
       CONFIG: Release
+      CMAKE_OPTIONS: ""
 
     - GENERATOR: "MinGW Makefiles"
       PLATFORM: MinGW-w64
       CONFIG: Debug
+      CMAKE_OPTIONS: ""
 
     - GENERATOR: "MinGW Makefiles"
       PLATFORM: MinGW-w64
       CONFIG: Release
+      CMAKE_OPTIONS: ""
 
     - GENERATOR: "MinGW Makefiles"
       PLATFORM: CLang
       CONFIG: Debug
+      CMAKE_OPTIONS: "-DUSE_CLANG=ON"
 
     - GENERATOR: "MinGW Makefiles"
       PLATFORM: CLang
       CONFIG: Release
+      CMAKE_OPTIONS: "-DUSE_CLANG=ON"
 
 install:
   - if [%PLATFORM%]==[MinGW-w64] rename "C:\Program Files\Git\usr\bin\sh.exe" "sh2.exe"
@@ -63,5 +75,5 @@ install:
 build_script:
   - mkdir build
   - cd build
-  - cmake -G "%GENERATOR%" ..
+  - cmake -G "%GENERATOR%" "%CMAKE_OPTIONS%" ..
   - cmake --build . --config "%CONFIG%"
