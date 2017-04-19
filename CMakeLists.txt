@@ -2,20 +2,6 @@ cmake_minimum_required(VERSION 3.0.0)
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
-project(xfspp)
-
-add_definitions(
-  -DNOMINMAX
-  -D_UNICODE
-  -DUNICODE
-  -DWINVER=0x0600
-  -D_WIN32_WINNT=0x0600
-)
-
-set(CMAKE_VERBOSE_MAKEFILE TRUE)
-
-include_directories(${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/cen/320)
-
 message(STATUS "ENV[CC]: " $ENV{CC})
 message(STATUS "ENV[CXX]: " $ENV{CXX})
 
@@ -68,6 +54,20 @@ else()
   set(CMAKE_CXX_FLAGS_RELEASE "-s -O3 ${CMAKE_CXX_FLAGS}")
   set(CMAKE_SHARED_LINKER_FLAGS "-Wl,--subsystem,windows,--kill-at,--enable-stdcall-fixup ${CMAKE_SHARED_LINKER_FLAGS}")
 endif()
+
+project(xfspp)
+
+add_definitions(
+  -DNOMINMAX
+  -D_UNICODE
+  -DUNICODE
+  -DWINVER=0x0600
+  -D_WIN32_WINNT=0x0600
+)
+
+set(CMAKE_VERBOSE_MAKEFILE TRUE)
+
+include_directories(${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/cen/320)
 
 message(STATUS "CMAKE_BINARY_DIR:         " ${CMAKE_BINARY_DIR})
 message(STATUS "CMAKE_CURRENT_BINARY_DIR: " ${CMAKE_CURRENT_BINARY_DIR})
