@@ -16,7 +16,10 @@ set(CMAKE_VERBOSE_MAKEFILE TRUE)
 
 include_directories(${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/cen/320)
 
-if(MSVC AND (NOT ($ENV{CC} MATCHES "clang")))
+message(STATUS "ENV[CC]: " $ENV{CC})
+message(STATUS "ENV[CXX]: " $ENV{CXX})
+
+if(MSVC AND (NOT ($ENV{CC} MATCHES ".*clang.*")))
   # /GF - String pooling
   # /MP - Parallel build
   set(CMAKE_CXX_FLAGS "/W4 /EHa /GR /DWIN32 /D_WINDOWS /GR")
