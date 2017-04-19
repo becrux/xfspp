@@ -63,6 +63,7 @@ install:
 build_script:
   - mkdir build
   - cd build
+  - ps: If ($Env:PLATFORM -eq 'CLang') { (New-Object Net.WebClient).DownloadFile("http://releases.llvm.org/4.0.0/LLVM-4.0.0-win32.exe", "$env:APPVEYOR_BUILD_FOLDER\llvm32.exe") }
   - if [%PLATFORM%]==[CLang] cmake -G "%GENERATOR%" -DCLANG=ON ..
-  - if [%PLATFORM%]!=[CLang] cmake -G "%GENERATOR%" ..
+  - if NOT [%PLATFORM%]==[CLang] cmake -G "%GENERATOR%" ..
   - cmake --build . --config "%CONFIG%"
