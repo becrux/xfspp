@@ -62,6 +62,6 @@ before_build:
 build_script:
   - mkdir build
   - cd build
-  - if [%PLATFORM%]==[CLang] cmake -G "%GENERATOR%" -T"LLVM-vs2013" -DCMAKE_CXX_COMPILER=clang-cl ..
+  - if [%PLATFORM%]==[CLang] cmake -G "%GENERATOR%" -T"LLVM-vs2013" ..
   - if NOT [%PLATFORM%]==[CLang] cmake -G "%GENERATOR%" ..
   - cmake --build . --config "%CONFIG%"
