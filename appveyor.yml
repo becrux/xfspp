@@ -63,5 +63,6 @@ install:
 build_script:
   - mkdir build
   - cd build
-  - cmake -G "%GENERATOR%" ..
+  - if [%PLATFORM%]==[CLang] cmake -G "%GENERATOR%" -DCLANG=ON ..
+  - if [%PLATFORM%]!=[CLang] cmake -G "%GENERATOR%" ..
   - cmake --build . --config "%CONFIG%"
