@@ -56,9 +56,6 @@ install:
   - if [%PLATFORM%]==[CLang] set PATH="C:\Program Files\LLVM\bin";%PATH%
   - if [%PLATFORM%]==[CLang] clang-cl -v
 
-before_build:
-  - if [%PLATFORM%]==[CLang] call "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\vcvarsall.bat" x86
-
 build_script:
   - mkdir build
   - cd build
