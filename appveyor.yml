@@ -59,6 +59,6 @@ install:
 build_script:
   - mkdir build
   - cd build
-  - if [%PLATFORM%]==[CLang] cmake -G "%GENERATOR%" -T"LLVM-vs2013" ..
+  - if [%PLATFORM%]==[CLang] cmake -G "%GENERATOR%" -TLLVM-vs2013 ..
   - if NOT [%PLATFORM%]==[CLang] cmake -G "%GENERATOR%" ..
   - cmake --build . --config "%CONFIG%"
