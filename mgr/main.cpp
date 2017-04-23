@@ -9,6 +9,7 @@
 #include <memory>
 #include <map>
 #include <list>
+#include <string>
 #include <sstream>
 #include <algorithm>
 
@@ -22,6 +23,8 @@
 #include "win32/msgwnd.hpp"
 #include "common/version.hpp"
 #include "util/memory.hpp"
+#include "util/methodscope.hpp"
+#include "spdlog/spdlog.h"
 
 #include <shlwapi.h>
 
@@ -53,15 +56,30 @@ namespace
     Timer timers[65535];
   };
 
-  HINSTANCE dllInstance;
+  HINSTANCE dllInstance = NULL;
   HANDLE mutexHandle = NULL;
-  Windows::SharedMemory< ShMemLayout > shMem;
-  std::map< void *,std::list< void * > > *allocMap = nullptr;
-  std::map< WORD,std::tuple< HWND,LPVOID > > *_timers = nullptr;
+
+  struct Context
+  {
+    Windows::SharedMemory< ShMemLayout > shMem;
+    std::map< void *,std::list< void * > > allocMap;
+    std::map< WORD,std::tuple< HWND,LPVOID > > _timers;
+  } *_ctx = nullptr;
+
+  void initializeContext()
+  {
+    if (!_ctx)
+    {
+      Windows::Synch::Locker< HANDLE > lock(mutexHandle);
+
+      if (!_ctx)
+        _ctx = new Context;
+    }
+  }
 
   VOID CALLBACK timerProc(HWND hWnd, UINT uMsg, UINT_PTR idEvent, DWORD dwTime)
   {
-    shMem.access([hWnd, uMsg, idEvent, dwTime] (ShMemLayout *p)
+    _ctx->shMem.access([hWnd, uMsg, idEvent, dwTime] (ShMemLayout *p)
       {
         PostMessage(p->timers[idEvent].hWnd,WFS_TIMER_EVENT,idEvent,reinterpret_cast< LPARAM >(p->timers[idEvent].lpContext));
       });
@@ -70,7 +88,7 @@ namespace
 
 #define CHECK_IF_STARTED \
   bool ok = false; \
-  shMem.access([&ok](ShMemLayout *p) \
+  _ctx->shMem.access([&ok](ShMemLayout *p) \
     { \
       ok = (std::find(std::begin(p->pidTable),std::end(p->pidTable),GetCurrentProcessId()) != std::end(p->pidTable)); \
     }); \
@@ -90,7 +108,7 @@ namespace
   \
   bool ok = false; \
   Windows::Library *lib = nullptr; \
-  shMem.access([&ok, &lib, hService, lpRequestID] (ShMemLayout *p) \
+  _ctx->shMem.access([&ok, &lib, hService, lpRequestID] (ShMemLayout *p) \
     { \
       auto it = std::find(std::begin(p->pidTable),std::end(p->pidTable),GetCurrentProcessId()); \
       \
@@ -132,12 +150,14 @@ public:
 
 extern "C" HRESULT WINAPI WFSCancelAsyncRequest(HSERVICE hService, REQUESTID RequestID)
 {
+  initializeContext();
+
   if (!hService)
     return WFS_ERR_INVALID_HSERVICE;
 
   bool ok = false;
   Windows::Library *lib = nullptr;
-  shMem.access([&ok, &lib, hService] (ShMemLayout *p)
+  _ctx->shMem.access([&ok, &lib, hService] (ShMemLayout *p)
     {
       auto it = std::find(std::begin(p->pidTable),std::end(p->pidTable),GetCurrentProcessId());
 
@@ -159,6 +179,8 @@ extern "C" HRESULT WINAPI WFSCancelAsyncRequest(HSERVICE hService, REQUESTID Req
 
 extern "C" HRESULT WINAPI WFSCancelBlockingCall(DWORD dwThreadID)
 {
+  initializeContext();
+
   CHECK_IF_STARTED
 
   return WFS_SUCCESS;
@@ -166,6 +188,8 @@ extern "C" HRESULT WINAPI WFSCancelBlockingCall(DWORD dwThreadID)
 
 extern "C" HRESULT WINAPI WFSCleanUp()
 {
+  initializeContext();
+
   CHECK_IF_STARTED
 
   return WFS_SUCCESS;
@@ -173,6 +197,8 @@ extern "C" HRESULT WINAPI WFSCleanUp()
 
 extern "C" HRESULT WINAPI WFSClose(HSERVICE hService)
 {
+  initializeContext();
+
   CHECK_IF_STARTED
 
   Windows::Synch::Semaphore sem(0,1);
@@ -192,6 +218,8 @@ extern "C" HRESULT WINAPI WFSClose(HSERVICE hService)
 
 extern "C" HRESULT WINAPI WFSAsyncClose(HSERVICE hService, HWND hWnd, LPREQUESTID lpRequestID)
 {
+  initializeContext();
+
   GET_LIB_AND_REQUEST
 
   return lib->call< HRESULT >("WFPClose",hService,hWnd,*lpRequestID);
@@ -199,11 +227,13 @@ extern "C" HRESULT WINAPI WFSAsyncClose(HSERVICE hService, HWND hWnd, LPREQUESTI
 
 extern "C" HRESULT WINAPI WFSCreateAppHandle(LPHAPP lphApp)
 {
+  initializeContext();
+
   if (!lphApp)
     return WFS_ERR_INVALID_POINTER;
 
   bool ok = false;
-  shMem.access([&ok, lphApp] (ShMemLayout *p)
+  _ctx->shMem.access([&ok, lphApp] (ShMemLayout *p)
     {
       auto it = std::find(std::begin(p->pidTable),std::end(p->pidTable),GetCurrentProcessId());
 
@@ -228,6 +258,8 @@ extern "C" HRESULT WINAPI WFSCreateAppHandle(LPHAPP lphApp)
 
 extern "C" HRESULT WINAPI WFSDeregister(HSERVICE hService, DWORD dwEventClass, HWND hWndReg)
 {
+  initializeContext();
+
   CHECK_IF_STARTED
 
   Windows::Synch::Semaphore sem(0,1);
@@ -247,6 +279,8 @@ extern "C" HRESULT WINAPI WFSDeregister(HSERVICE hService, DWORD dwEventClass, H
 
 extern "C" HRESULT WINAPI WFSAsyncDeregister(HSERVICE hService, DWORD dwEventClass, HWND hWndReg, HWND hWnd, LPREQUESTID lpRequestID)
 {
+  initializeContext();
+
   if (!hWndReg)
     return WFS_ERR_INVALID_HWNDREG;
 
@@ -257,13 +291,15 @@ extern "C" HRESULT WINAPI WFSAsyncDeregister(HSERVICE hService, DWORD dwEventCla
 
 extern "C" HRESULT WINAPI WFSDestroyAppHandle(HAPP hApp)
 {
+  initializeContext();
+
   if (!hApp)
     return WFS_ERR_INVALID_APP_HANDLE;
 
   int idx = reinterpret_cast< int >(hApp) - 1;
 
   bool ok = false;
-  shMem.access([&ok, &idx] (ShMemLayout *p)
+  _ctx->shMem.access([&ok, &idx] (ShMemLayout *p)
     {
       auto it = std::find(std::begin(p->pidTable),std::end(p->pidTable),GetCurrentProcessId());
 
@@ -286,6 +322,8 @@ extern "C" HRESULT WINAPI WFSDestroyAppHandle(HAPP hApp)
 
 extern "C" HRESULT WINAPI WFSExecute(HSERVICE hService, DWORD dwCommand, LPVOID lpCmdData, DWORD dwTimeOut, LPWFSRESULT *lppResult)
 {
+  initializeContext();
+
   CHECK_IF_STARTED
 
   Windows::Synch::Semaphore sem(0,1);
@@ -305,6 +343,8 @@ extern "C" HRESULT WINAPI WFSExecute(HSERVICE hService, DWORD dwCommand, LPVOID 
 
 extern "C" HRESULT WINAPI WFSAsyncExecute(HSERVICE hService, DWORD dwCommand, LPVOID lpCmdData, DWORD dwTimeOut, HWND hWnd, LPREQUESTID lpRequestID)
 {
+  initializeContext();
+
   GET_LIB_AND_REQUEST
 
   return lib->call< HRESULT >("WFPExecute",hService,dwCommand,lpCmdData,dwTimeOut,hWnd,*lpRequestID);
@@ -312,6 +352,8 @@ extern "C" HRESULT WINAPI WFSAsyncExecute(HSERVICE hService, DWORD dwCommand, LP
 
 extern "C" HRESULT WINAPI WFSFreeResult(LPWFSRESULT lpResult)
 {
+  initializeContext();
+
   CHECK_IF_STARTED
 
   return WFMFreeBuffer(lpResult);
@@ -319,6 +361,8 @@ extern "C" HRESULT WINAPI WFSFreeResult(LPWFSRESULT lpResult)
 
 extern "C" HRESULT WINAPI WFSGetInfo(HSERVICE hService, DWORD dwCategory, LPVOID lpQueryDetails, DWORD dwTimeOut, LPWFSRESULT *lppResult)
 {
+  initializeContext();
+
   CHECK_IF_STARTED
 
   Windows::Synch::Semaphore sem(0,1);
@@ -338,6 +382,8 @@ extern "C" HRESULT WINAPI WFSGetInfo(HSERVICE hService, DWORD dwCategory, LPVOID
 
 extern "C" HRESULT WINAPI WFSAsyncGetInfo(HSERVICE hService, DWORD dwCategory, LPVOID lpQueryDetails, DWORD dwTimeOut, HWND hWnd, LPREQUESTID lpRequestID)
 {
+  initializeContext();
+
   GET_LIB_AND_REQUEST
 
   return lib->call< HRESULT >("WFPGetInfo",hService,dwCategory,lpQueryDetails,dwTimeOut,hWnd,*lpRequestID);
@@ -345,6 +391,8 @@ extern "C" HRESULT WINAPI WFSAsyncGetInfo(HSERVICE hService, DWORD dwCategory, L
 
 extern "C" BOOL WINAPI WFSIsBlocking()
 {
+  initializeContext();
+
   CHECK_IF_STARTED
 
   return FALSE;
@@ -352,6 +400,8 @@ extern "C" BOOL WINAPI WFSIsBlocking()
 
 extern "C" HRESULT WINAPI WFSLock(HSERVICE hService, DWORD dwTimeOut, LPWFSRESULT *lppResult)
 {
+  initializeContext();
+
   if (!lppResult)
     return WFS_ERR_INVALID_POINTER;
 
@@ -374,6 +424,8 @@ extern "C" HRESULT WINAPI WFSLock(HSERVICE hService, DWORD dwTimeOut, LPWFSRESUL
 
 extern "C" HRESULT WINAPI WFSAsyncLock(HSERVICE hService, DWORD dwTimeOut, HWND hWnd, LPREQUESTID lpRequestID)
 {
+  initializeContext();
+
   GET_LIB_AND_REQUEST
 
   return lib->call< HRESULT >("WFPLock",hService,dwTimeOut,hWnd,*lpRequestID);
@@ -381,6 +433,8 @@ extern "C" HRESULT WINAPI WFSAsyncLock(HSERVICE hService, DWORD dwTimeOut, HWND 
 
 extern "C" HRESULT WINAPI WFSOpen(LPSTR lpszLogicalName, HAPP hApp, LPSTR lpszAppID, DWORD dwTraceLevel, DWORD dwTimeOut, DWORD dwSrvcVersionsRequired, LPWFSVERSION lpSrvcVersion, LPWFSVERSION lpSPIVersion, LPHSERVICE lphService)
 {
+  initializeContext();
+
   if (!hApp)
     return WFS_ERR_INVALID_APP_HANDLE;
 
@@ -406,6 +460,8 @@ extern "C" HRESULT WINAPI WFSOpen(LPSTR lpszLogicalName, HAPP hApp, LPSTR lpszAp
 
 extern "C" HRESULT WINAPI WFSAsyncOpen(LPSTR lpszLogicalName, HAPP hApp, LPSTR lpszAppID, DWORD dwTraceLevel, DWORD dwTimeOut, LPHSERVICE lphService, HWND hWnd, DWORD dwSrvcVersionsRequired, LPWFSVERSION lpSrvcVersion, LPWFSVERSION lpSPIVersion, LPREQUESTID lpRequestID)
 {
+  initializeContext();
+
   if (!hApp)
     return WFS_ERR_INVALID_APP_HANDLE;
 
@@ -417,40 +473,76 @@ extern "C" HRESULT WINAPI WFSAsyncOpen(LPSTR lpszLogicalName, HAPP hApp, LPSTR l
   clearMem(*lpSPIVersion);
   clearMem(*lpSrvcVersion);
 
-  bool ok = false;
   Windows::Library *lib = nullptr;
-  shMem.access([&ok, &lib, &hApp, lphService, lpRequestID] (ShMemLayout *p)
+  HRESULT hRes = WFS_SUCCESS;
+  _ctx->shMem.access([&lib, &hRes, &hApp, lphService, lpRequestID, lpszLogicalName] (ShMemLayout *p)
     {
       auto it = std::find(std::begin(p->pidTable),std::end(p->pidTable),GetCurrentProcessId());
 
       if (it == std::end(p->pidTable))
+      {
+        hRes = WFS_ERR_NOT_STARTED;
         return;
+      }
 
       ShMemLayout::AppData &item = p->apps[std::distance(std::begin(p->pidTable),it)];
-
-      ok = true;
 
       if (!item.handles[reinterpret_cast< int >(hApp) - 1])
       {
         hApp = NULL;
+        hRes = WFS_ERR_INVALID_APP_HANDLE;
         return;
       }
 
       auto sit = std::find_if(std::begin(item.hServices),std::end(item.hServices),[] (const ShMemLayout::AppData::SPData &x) { return x.reqId == 0; });
       if (sit == std::end(item.hServices))
+      {
+        hRes = WFS_ERR_INTERNAL_ERROR;
         return;
+      }
 
       sit->reqId = 1;
-      sit->spLib = new Windows::Library(L"sp.dll");
+
+      HKEY key;
+      if (WFMOpenKey(
+            WFS_CFG_HKEY_USER_DEFAULT_XFS_ROOT,
+            const_cast<LPSTR>((std::string("LOGICAL_SERVICES\\") + std::string(lpszLogicalName)).c_str()),
+            &key) != WFS_SUCCESS)
+      {
+        hRes = WFS_ERR_INVALID_SERVPROV;
+        return;
+      }
+
+      MethodScope keyScope([&key] () { WFMCloseKey(key); });
+
+      CHAR provPath[MAX_PATH];
+      DWORD provPathLength = MAX_PATH;
+
+      clearMem(provPath);
+      if (WFMQueryValue(key,"provider",provPath,&provPathLength) != WFS_SUCCESS)
+      {
+        hRes = WFS_ERR_INVALID_SERVPROV;
+        return;
+      }
+
+      TCHAR wProvPath[MAX_PATH];
+      clearMem(wProvPath);
+      MultiByteToWideChar(CP_UTF8,MB_ERR_INVALID_CHARS | MB_PRECOMPOSED,provPath,-1,wProvPath,MAX_PATH);
+
+      sit->spLib = new Windows::Library(wProvPath);
+
+      if (!*(sit->spLib))
+      {
+        hRes = WFS_ERR_INVALID_SERVPROV;
+        return;
+      }
+
       *lpRequestID = 1;
       *lphService = static_cast< HSERVICE >(std::distance(std::begin(item.hServices),sit) + 1);
   });
 
-  if (!ok)
-    return WFS_ERR_NOT_STARTED;
-
-  if (!hApp)
-    return WFS_ERR_INVALID_APP_HANDLE;
+  if (hRes != WFS_SUCCESS)
+    return hRes;
 
   return lib->call< HRESULT >("WFPOpen",
     *lphService,
@@ -470,6 +562,8 @@ extern "C" HRESULT WINAPI WFSAsyncOpen(LPSTR lpszLogicalName, HAPP hApp, LPSTR l
 
 extern "C" HRESULT WINAPI WFSRegister(HSERVICE hService, DWORD dwEventClass, HWND hWndReg)
 {
+  initializeContext();
+
   CHECK_IF_STARTED
 
   Windows::Synch::Semaphore sem(0,1);
@@ -489,6 +583,8 @@ extern "C" HRESULT WINAPI WFSRegister(HSERVICE hService, DWORD dwEventClass, HWN
 
 extern "C" HRESULT WINAPI WFSAsyncRegister(HSERVICE hService, DWORD dwEventClass, HWND hWndReg, HWND hWnd, LPREQUESTID lpRequestID)
 {
+  initializeContext();
+
   if (!hWndReg)
     return WFS_ERR_INVALID_HWNDREG;
 
@@ -499,6 +595,8 @@ extern "C" HRESULT WINAPI WFSAsyncRegister(HSERVICE hService, DWORD dwEventClass
 
 extern "C" HRESULT WINAPI WFSSetBlockingHook(XFSBLOCKINGHOOK lpBlockFunc, LPXFSBLOCKINGHOOK lppPrevFunc)
 {
+  initializeContext();
+
   CHECK_IF_STARTED
 
   return WFS_SUCCESS;
@@ -506,6 +604,8 @@ extern "C" HRESULT WINAPI WFSSetBlockingHook(XFSBLOCKINGHOOK lpBlockFunc, LPXFSB
 
 extern "C" HRESULT WINAPI WFSStartUp(DWORD dwVersionsRequired, LPWFSVERSION lpWFSVersion)
 {
+  initializeContext();
+
   XFS::VersionRange vr(dwVersionsRequired);
 
   if (vr.start() > vr.end())
@@ -529,7 +629,7 @@ extern "C" HRESULT WINAPI WFSStartUp(DWORD dwVersionsRequired, LPWFSVERSION lpWF
   strcpy_s(lpWFSVersion->szDescription,"xfspp XFS Manager");
 
   HRESULT hRes = WFS_SUCCESS;
-  shMem.access([&hRes] (ShMemLayout *p)
+  _ctx->shMem.access([&hRes] (ShMemLayout *p)
     {
       auto it = std::find(std::begin(p->pidTable),std::end(p->pidTable),GetCurrentProcessId());
 
@@ -556,6 +656,8 @@ extern "C" HRESULT WINAPI WFSStartUp(DWORD dwVersionsRequired, LPWFSVERSION lpWF
 
 extern "C" HRESULT WINAPI WFSUnhookBlockingHook()
 {
+  initializeContext();
+
   CHECK_IF_STARTED
 
   return WFS_SUCCESS;
@@ -563,6 +665,8 @@ extern "C" HRESULT WINAPI WFSUnhookBlockingHook()
 
 extern "C" HRESULT WINAPI WFSUnlock(HSERVICE hService)
 {
+  initializeContext();
+
   CHECK_IF_STARTED
 
   Windows::Synch::Semaphore sem(0,1);
@@ -582,6 +686,8 @@ extern "C" HRESULT WINAPI WFSUnlock(HSERVICE hService)
 
 extern "C" HRESULT WINAPI WFSAsyncUnlock(HSERVICE hService, HWND hWnd, LPREQUESTID lpRequestID)
 {
+  initializeContext();
+
   GET_LIB_AND_REQUEST
 
   return lib->call< HRESULT >("WFPUnlock",hService,hWnd,*lpRequestID);
@@ -589,42 +695,42 @@ extern "C" HRESULT WINAPI WFSAsyncUnlock(HSERVICE hService, HWND hWnd, LPREQUEST
 
 extern "C" HRESULT WINAPI WFMSetTraceLevel(HSERVICE hService, DWORD dwTraceLevel)
 {
+  initializeContext();
+
   return WFS_SUCCESS;
 }
 
 extern "C" HRESULT WINAPI WFMAllocateBuffer(ULONG ulSize, ULONG, LPVOID *lppvData)
 {
+  initializeContext();
+
   Windows::Synch::Locker< HANDLE > lock(mutexHandle);
 
   if (!lppvData)
     return WFS_ERR_INVALID_POINTER;
-
-  if (!allocMap)
-    allocMap = new std::map< void *,std::list< void * > >();
 
   *lppvData = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,ulSize);
 
   if (!*lppvData)
     return WFS_ERR_OUT_OF_MEMORY;
 
-  allocMap->emplace(*lppvData,std::list< void * >());
+  _ctx->allocMap.emplace(*lppvData,std::list< void * >());
 
   return WFS_SUCCESS;
 }
 
 extern "C" HRESULT WINAPI WFMAllocateMore(ULONG ulSize, LPVOID lpvOriginal, LPVOID *lppvData)
 {
+  initializeContext();
+
   Windows::Synch::Locker< HANDLE > lock(mutexHandle);
 
   if (!lppvData)
     return WFS_ERR_INVALID_POINTER;
 
-  if (!allocMap)
-    return WFS_ERR_INVALID_ADDRESS;
-
-  auto it = allocMap->find(lpvOriginal);
+  auto it = _ctx->allocMap.find(lpvOriginal);
   
-  if (it == allocMap->cend())
+  if (it == _ctx->allocMap.cend())
     return WFS_ERR_INVALID_ADDRESS;
 
   *lppvData = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,ulSize);
@@ -632,45 +738,48 @@ extern "C" HRESULT WINAPI WFMAllocateMore(ULONG ulSize, LPVOID lpvOriginal, LPVO
   if (!*lppvData)
     return WFS_ERR_OUT_OF_MEMORY;
 
-  (*allocMap)[lpvOriginal].push_back(*lppvData);
+  _ctx->allocMap[lpvOriginal].push_back(*lppvData);
 
   return WFS_SUCCESS;
 }
 
 extern "C" HRESULT WINAPI WFMFreeBuffer(LPVOID lpvData)
 {
+  initializeContext();
+
   Windows::Synch::Locker< HANDLE > lock(mutexHandle);
   
   if (!lpvData)
     return WFS_ERR_INVALID_POINTER;
 
-  if (!allocMap)
+  auto it = _ctx->allocMap.find(lpvData);
+
+  if (it == _ctx->allocMap.cend())
     return WFS_ERR_INVALID_BUFFER;
 
-  auto it = allocMap->find(lpvData);
-
-  if (it == allocMap->cend())
-    return WFS_ERR_INVALID_BUFFER;
-
-  for (void *p : allocMap->at(lpvData))
+  for (void *p : _ctx->allocMap.at(lpvData))
     HeapFree(GetProcessHeap(),0,p);
 
   HeapFree(GetProcessHeap(),0,lpvData);
 
-  allocMap->erase(it);
+  _ctx->allocMap.erase(it);
 
   return WFS_SUCCESS;
 }
 
 extern "C" HRESULT WINAPI WFMGetTraceLevel(HSERVICE hService, LPDWORD lpdwTraceLevel)
 {
+  initializeContext();
+
   return WFS_SUCCESS;
 }
 
 extern "C" HRESULT WINAPI WFMKillTimer(WORD wTimerID)
 {
+  initializeContext();
+
   HRESULT hRes = WFS_SUCCESS;
-  shMem.access([&hRes, wTimerID]  (ShMemLayout *p)
+  _ctx->shMem.access([&hRes, wTimerID]  (ShMemLayout *p)
     {
       if (p->timers[wTimerID].hWnd == NULL)
       {
@@ -692,16 +801,22 @@ extern "C" HRESULT WINAPI WFMKillTimer(WORD wTimerID)
 
 extern "C" HRESULT WINAPI WFMOutputTraceData(LPSTR lpszData)
 {
+  initializeContext();
+
   return WFS_SUCCESS;
 }
 
 extern "C" HRESULT WINAPI WFMReleaseDLL(HPROVIDER hProvider)
 {
+  initializeContext();
+
   return WFS_SUCCESS;
 }
 
 extern "C" HRESULT WINAPI WFMSetTimer(HWND hWnd, LPVOID lpContext, DWORD dwTimeVal, LPWORD lpwTimerID)
 {
+  initializeContext();
+
   if (!hWnd)
     return WFS_ERR_INVALID_HWND;
 
@@ -712,7 +827,7 @@ extern "C" HRESULT WINAPI WFMSetTimer(HWND hWnd, LPVOID lpContext, DWORD dwTimeV
     return WFS_ERR_INVALID_DATA;
 
   HRESULT hRes = WFS_SUCCESS;
-  shMem.access([&hRes, hWnd, lpContext, dwTimeVal] (ShMemLayout *p)
+  _ctx->shMem.access([&hRes, hWnd, lpContext, dwTimeVal] (ShMemLayout *p)
     {
       auto it = std::find_if(std::begin(p->timers),std::end(p->timers),[] (const ShMemLayout::Timer &t) { return t.hWnd == NULL; });
 
@@ -739,6 +854,8 @@ extern "C" HRESULT WINAPI WFMSetTimer(HWND hWnd, LPVOID lpContext, DWORD dwTimeV
 
 extern "C" HRESULT WINAPI WFMCloseKey(HKEY hKey)
 {
+  initializeContext();
+
   switch (RegCloseKey(hKey))
   {
     case ERROR_SUCCESS:
@@ -754,6 +871,8 @@ extern "C" HRESULT WINAPI WFMCloseKey(HKEY hKey)
 
 extern "C" HRESULT WINAPI WFMCreateKey(HKEY hKey, LPSTR lpszSubKey, PHKEY phkResult, LPDWORD lpdwDisposition)
 {
+  initializeContext();
+
   if (!lpszSubKey || !phkResult || !lpdwDisposition)
     return WFS_ERR_INVALID_POINTER;
 
@@ -812,6 +931,8 @@ extern "C" HRESULT WINAPI WFMCreateKey(HKEY hKey, LPSTR lpszSubKey, PHKEY phkRes
 
 extern "C" HRESULT WINAPI WFMDeleteKey(HKEY hKey, LPSTR lpszSubKey)
 {
+  initializeContext();
+
   if (!lpszSubKey)
     return WFS_ERR_INVALID_POINTER;
 
@@ -836,6 +957,8 @@ extern "C" HRESULT WINAPI WFMDeleteKey(HKEY hKey, LPSTR lpszSubKey)
 
 extern "C" HRESULT WINAPI WFMDeleteValue(HKEY hKey, LPSTR lpszValue)
 {
+  initializeContext();
+
   if (!lpszValue)
     return WFS_ERR_INVALID_POINTER;
 
@@ -856,6 +979,8 @@ extern "C" HRESULT WINAPI WFMDeleteValue(HKEY hKey, LPSTR lpszValue)
 
 extern "C" HRESULT WINAPI WFMEnumKey(HKEY hKey, DWORD iSubKey, LPSTR lpszName, LPDWORD lpcchName, PFILETIME lpftLastWrite)
 {
+  initializeContext();
+
   if (!lpszName || !lpcchName || !lpftLastWrite)
     return WFS_ERR_INVALID_POINTER;
 
@@ -882,6 +1007,8 @@ extern "C" HRESULT WINAPI WFMEnumKey(HKEY hKey, DWORD iSubKey, LPSTR lpszName, L
 
 extern "C" HRESULT WINAPI WFMEnumValue(HKEY hKey, DWORD iValue, LPSTR lpszValue, LPDWORD lpcchValue, LPSTR lpszData, LPDWORD lpcchData)
 {
+  initializeContext();
+
   if (!lpszValue || !lpcchValue || !lpszData || !lpcchData)
     return WFS_ERR_INVALID_POINTER;
 
@@ -912,6 +1039,8 @@ extern "C" HRESULT WINAPI WFMEnumValue(HKEY hKey, DWORD iValue, LPSTR lpszValue,
 
 extern "C" HRESULT WINAPI WFMOpenKey(HKEY hKey, LPSTR lpszSubKey, PHKEY phkResult)
 {
+  initializeContext();
+
   if (!lpszSubKey || !phkResult)
     return WFS_ERR_INVALID_POINTER;
 
@@ -955,6 +1084,8 @@ extern "C" HRESULT WINAPI WFMOpenKey(HKEY hKey, LPSTR lpszSubKey, PHKEY phkResul
 
 extern "C" HRESULT WINAPI WFMQueryValue(HKEY hKey, LPSTR lpszValueName, LPSTR lpszData, LPDWORD lpcchData)
 {
+  initializeContext();
+
   if (!lpszValueName || !lpszData || !lpcchData)
     return WFS_ERR_INVALID_POINTER;
 
@@ -981,6 +1112,8 @@ extern "C" HRESULT WINAPI WFMQueryValue(HKEY hKey, LPSTR lpszValueName, LPSTR lp
 
 extern "C" HRESULT WINAPI WFMSetValue(HKEY hKey, LPSTR lpszValueName, LPSTR lpszData, DWORD cchData)
 {
+  initializeContext();
+
   if (!lpszValueName || !lpszData)
     return WFS_ERR_INVALID_POINTER;
 
@@ -1008,7 +1141,7 @@ extern "C" BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID)
 
     case DLL_PROCESS_DETACH:
       CloseHandle(mutexHandle);
-      delete allocMap;
+      delete _ctx;
       break;
 
     default:

@@ -14,7 +14,7 @@ add_definitions(
 
 set(CMAKE_VERBOSE_MAKEFILE TRUE)
 
-include_directories(${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/cen/320)
+include_directories(${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/cen/320 ${CMAKE_SOURCE_DIR}/ext)
 
 if(MSVC)
   # /GF - String pooling
@@ -130,26 +130,6 @@ message(STATUS "CMAKE_C_COMPILER_ID: " ${CMAKE_C_COMPILER_ID})
 message(STATUS "CMAKE_CXX_COMPILER_ID: " ${CMAKE_CXX_COMPILER_ID})
 message(STATUS "CMAKE_AR: " ${CMAKE_AR})
 message(STATUS "CMAKE_RANLIB: " ${CMAKE_RANLIB})
-
-function(ADD_HEADERS HEADER_FILES_LIST)
-  foreach(CPP_FILE ${ARGN})
-    get_filename_component(ABS_FILE_PATH ${CPP_FILE} REALPATH)
-    get_filename_component(SOURCE_FILE_WE ${ABS_FILE_PATH} NAME_WE)
-    get_filename_component(SOURCE_DIR ${ABS_FILE_PATH} DIRECTORY)
-    set(HEADER_FILE_STR "${SOURCE_DIR}/${SOURCE_FILE_WE}.hpp")
-    file(TO_CMAKE_PATH ${HEADER_FILE_STR} HEADER_FILE)
-    if (EXISTS ${HEADER_FILE})
-      list(APPEND HEADER_FILES ${HEADER_FILE})
-    endif()
-  endforeach()
-
-  file(GLOB UTIL_HEADER_FILES "${CMAKE_SOURCE_DIR}/util/*.hpp")
-  list(APPEND HEADER_FILES ${UTIL_HEADER_FILES})
-  file(GLOB CEN_HEADER_FILES "${CMAKE_SOURCE_DIR}/cen/320/*.h")
-  list(APPEND HEADER_FILES ${CEN_HEADER_FILES})
-
-  set(${HEADER_FILES_LIST} ${HEADER_FILES} PARENT_SCOPE)
-endfunction()
 
 add_subdirectory(mgr)
 add_subdirectory(sp)

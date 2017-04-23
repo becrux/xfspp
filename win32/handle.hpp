@@ -86,6 +86,11 @@ namespace Windows
 
       return *this;
     }
+
+    explicit operator bool() const
+    {
+      return _h != NULL;
+    }
   };
 }
 

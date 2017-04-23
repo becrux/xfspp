@@ -16,7 +16,6 @@
 using namespace Log;
 
 Windows::Synch::Mutex _mutex;
-std::ofstream _f("C:\\xfs\\build\\out.txt",std::ios::out);
 
 Logger::Logger()
 {

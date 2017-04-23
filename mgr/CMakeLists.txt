@@ -15,7 +15,7 @@ set(SOURCES
   mgr.def
 )
 
-add_headers(HEADERS ${SOURCES})
+file(GLOB_RECURSE HEADERS "${CMAKE_SOURCE_DIR}/*.h*")
 
 add_library(xfsmgr SHARED ${SOURCES} ${HEADERS})
 

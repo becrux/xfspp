@@ -13,6 +13,6 @@ set(SOURCES
   sp.def
 )
 
-add_headers(HEADERS ${SOURCES})
+file(GLOB_RECURSE HEADERS "${CMAKE_SOURCE_DIR}/*.h*")
 
 add_library(test_sp SHARED ${SOURCES} ${HEADERS})

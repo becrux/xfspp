@@ -14,7 +14,13 @@
 template< typename T >
 inline void clearMem(T &var)
 {
-  ::memset(&var,0,sizeof(T));
+  SecureZeroMemory(&var,sizeof(T));
+}
+
+template< typename T, size_t N >
+inline void clearMem(T (&arr)[N])
+{
+  SecureZeroMemory(arr,sizeof(T) * N);
 }
 
 template< typename T >
