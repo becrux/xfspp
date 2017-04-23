@@ -28,6 +28,8 @@
 
 #include <shlwapi.h>
 
+spdlog::logger *logger = nullptr;
+
 namespace
 {
   struct ShMemLayout
@@ -63,7 +65,8 @@ namespace
   {
     Windows::SharedMemory< ShMemLayout > shMem;
     std::map< void *,std::list< void * > > allocMap;
-    std::map< WORD,std::tuple< HWND,LPVOID > > _timers;
+    std::map< WORD,std::tuple< HWND,LPVOID > > timers;
+	  std::shared_ptr< spdlog::logger > logger;
   } *_ctx = nullptr;
 
   void initializeContext()
@@ -72,8 +75,12 @@ namespace
     {
       Windows::Synch::Locker< HANDLE > lock(mutexHandle);
 
-      if (!_ctx)
-        _ctx = new Context;
+  	  if (!_ctx)
+  	  {
+    		_ctx = new Context;
+        _ctx->logger = spdlog::basic_logger_mt("basic_logger", "logs/basic.txt");
+        logger = _ctx->logger.get();
+      }
     }
   }
 

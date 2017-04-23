@@ -11,11 +11,11 @@
 #include <fstream>
 
 #include "log/log.hpp"
-#include "win32/synch.hpp"
+#include "spdlog/spdlog.h"
 
 using namespace Log;
 
-Windows::Synch::Mutex _mutex;
+extern spdlog::logger *logger;
 
 Logger::Logger()
 {
@@ -24,23 +24,14 @@ Logger::Logger()
 
 Logger::~Logger()
 {
-  Windows::Synch::Locker< Windows::Synch::Mutex > lock(_mutex);
-
   SYSTEMTIME st;
   GetLocalTime(&st);
 
-  _f <<
-    st.wYear << "-" <<
-    std::setw(2) << std::setfill('0') << st.wMonth << "-" <<
-    std::setw(2) << std::setfill('0') << st.wDay << "-" <<
-    "T" <<
-    std::setw(2) << std::setfill('0') << st.wHour << ":" <<
-    std::setw(2) << std::setfill('0') << st.wMinute << ":" <<
-    std::setw(2) << std::setfill('0') << st.wSecond << "." <<
-    st.wMilliseconds << "\t" <<
-    std::setw(6) << std::setfill('0') << GetCurrentProcessId() << "\t" <<
-    std::setw(6) << std::setfill('0') << GetCurrentThreadId() << "\t" <<
-    str() << std::endl;
+  logger->debug("{0}-{1}-{2}T{3}:{4}:{5}.{6}\t{7:#06x}\t{8:#06x}\t{9}",
+    st.wYear,st.wMonth,st.wDay,
+    st.wHour,st.wMinute,st.wSecond,st.wMilliseconds,
+    GetCurrentProcessId(),GetCurrentThreadId(),
+    str());
 }
 
 Method::Method(const std::string &fName, const std::string &params) :

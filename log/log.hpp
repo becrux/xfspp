@@ -13,7 +13,7 @@
 #include <sstream>
 #include <string>
 
-#include <Windows.h>
+#include <windows.h>
 
 #define LOG_STRING(...) static_cast< std::ostringstream && >(std::ostringstream() << __VA_ARGS__).str()
 #define __LAMBDA_FUNCSIG__(sig) "__LAMBDA__[" sig "]"

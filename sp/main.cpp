@@ -9,15 +9,40 @@
 #include "xfsspi.h"
 
 #include "win32/synch.hpp"
+#include "spdlog/spdlog.h"
+
+spdlog::logger *logger = nullptr;
 
 namespace
 {
   HINSTANCE dllInstance;
   HANDLE mutexHandle = NULL;
+
+  struct Context
+  {
+    std::shared_ptr< spdlog::logger > logger;
+  } *_ctx = nullptr;
+
+  void initializeContext()
+  {
+    if (!_ctx)
+    {
+      Windows::Synch::Locker< HANDLE > lock(mutexHandle);
+
+      if (!_ctx)
+      {
+        _ctx = new Context;
+        _ctx->logger = spdlog::basic_logger_mt("basic_logger", "logs/basic.txt");
+        logger = _ctx->logger.get();
+      }
+    }
+  }
 }
 
 extern "C" HRESULT WINAPI WFPCancelAsyncRequest(HSERVICE hService, REQUESTID RequestID)
 {
+  initializeContext();
+
   Windows::Synch::Locker< HANDLE > lock(mutexHandle);
 
   return WFS_SUCCESS;
@@ -25,6 +50,8 @@ extern "C" HRESULT WINAPI WFPCancelAsyncRequest(HSERVICE hService, REQUESTID Req
 
 extern "C" HRESULT WINAPI WFPClose(HSERVICE hService, HWND hWnd, REQUESTID ReqID)
 {
+  initializeContext();
+
   Windows::Synch::Locker< HANDLE > lock(mutexHandle);
 
   return WFS_SUCCESS;
@@ -32,6 +59,8 @@ extern "C" HRESULT WINAPI WFPClose(HSERVICE hService, HWND hWnd, REQUESTID ReqID
 
 extern "C" HRESULT WINAPI WFPDeregister(HSERVICE hService, DWORD dwEventClass, HWND hWndReg, HWND hWnd, REQUESTID ReqID)
 {
+  initializeContext();
+
   Windows::Synch::Locker< HANDLE > lock(mutexHandle);
 
   return WFS_SUCCESS;
@@ -39,6 +68,8 @@ extern "C" HRESULT WINAPI WFPDeregister(HSERVICE hService, DWORD dwEventClass, H
 
 extern "C" HRESULT WINAPI WFPExecute(HSERVICE hService, DWORD dwCommand, LPVOID lpCmdData, DWORD dwTimeOut, HWND hWnd, REQUESTID ReqID)
 {
+  initializeContext();
+
   Windows::Synch::Locker< HANDLE > lock(mutexHandle);
 
   return WFS_SUCCESS;
@@ -46,6 +77,8 @@ extern "C" HRESULT WINAPI WFPExecute(HSERVICE hService, DWORD dwCommand, LPVOID 
 
 extern "C" HRESULT WINAPI WFPGetInfo(HSERVICE hService, DWORD dwCategory, LPVOID lpQueryDetails, DWORD dwTimeOut, HWND hWnd, REQUESTID ReqID)
 {
+  initializeContext();
+
   Windows::Synch::Locker< HANDLE > lock(mutexHandle);
 
   return WFS_SUCCESS;
@@ -53,6 +86,8 @@ extern "C" HRESULT WINAPI WFPGetInfo(HSERVICE hService, DWORD dwCategory, LPVOID
 
 extern "C" HRESULT WINAPI WFPLock(HSERVICE hService, DWORD dwTimeOut, HWND hWnd, REQUESTID ReqID)
 {
+  initializeContext();
+
   Windows::Synch::Locker< HANDLE > lock(mutexHandle);
 
   return WFS_SUCCESS;
@@ -60,6 +95,8 @@ extern "C" HRESULT WINAPI WFPLock(HSERVICE hService, DWORD dwTimeOut, HWND hWnd,
 
 extern "C" HRESULT WINAPI WFPOpen(HSERVICE hService, LPSTR lpszLogicalName, HAPP hApp, LPSTR lpszAppID, DWORD dwTraceLevel, DWORD dwTimeOut, HWND hWnd, REQUESTID ReqID, HPROVIDER hProvider, DWORD dwSPIVersionsRequired, LPWFSVERSION lpSPIVersion, DWORD dwSrvcVersionsRequired, LPWFSVERSION lpSrvcVersion)
 {
+  initializeContext();
+
   Windows::Synch::Locker< HANDLE > lock(mutexHandle);
 
   return WFS_SUCCESS;
@@ -67,6 +104,8 @@ extern "C" HRESULT WINAPI WFPOpen(HSERVICE hService, LPSTR lpszLogicalName, HAPP
 
 extern "C" HRESULT WINAPI WFPRegister(HSERVICE hService, DWORD dwEventClass, HWND hWndReg, HWND hWnd, REQUESTID ReqID)
 {
+  initializeContext();
+
   Windows::Synch::Locker< HANDLE > lock(mutexHandle);
 
   return WFS_SUCCESS;
@@ -74,6 +113,8 @@ extern "C" HRESULT WINAPI WFPRegister(HSERVICE hService, DWORD dwEventClass, HWN
 
 extern "C" HRESULT WINAPI WFPSetTraceLevel(HSERVICE hService, DWORD dwTraceLevel)
 {
+  initializeContext();
+
   Windows::Synch::Locker< HANDLE > lock(mutexHandle);
 
   return WFS_SUCCESS;
@@ -81,6 +122,8 @@ extern "C" HRESULT WINAPI WFPSetTraceLevel(HSERVICE hService, DWORD dwTraceLevel
 
 extern "C" HRESULT WINAPI WFPUnloadService(void)
 {
+  initializeContext();
+
   Windows::Synch::Locker< HANDLE > lock(mutexHandle);
 
   return WFS_SUCCESS;
@@ -88,6 +131,8 @@ extern "C" HRESULT WINAPI WFPUnloadService(void)
 
 extern "C" HRESULT WINAPI WFPUnlock(HSERVICE hService, HWND hWnd, REQUESTID ReqID)
 {
+  initializeContext();
+
   Windows::Synch::Locker< HANDLE > lock(mutexHandle);
 
   return WFS_SUCCESS;
@@ -98,15 +143,13 @@ extern "C" BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID)
   switch (fdwReason)
   {
     case DLL_PROCESS_ATTACH:
-      mutexHandle = CreateMutex(NULL,FALSE,NULL);
-      /* no break here */
-
-    case DLL_THREAD_ATTACH:
       dllInstance = hinstDLL;
+      mutexHandle = CreateMutex(NULL,FALSE,NULL);
       break;
 
     case DLL_PROCESS_DETACH:
       CloseHandle(mutexHandle);
+      delete _ctx;
       break;
 
     default:
