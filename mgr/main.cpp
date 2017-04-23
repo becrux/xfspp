@@ -43,12 +43,29 @@ namespace
 
     AppData apps[64];
     DWORD pidTable[64];
+
+    struct Timer
+    {
+      LPVOID lpContext;
+      HWND hWnd;
+    };
+    
+    Timer timers[65535];
   };
 
   HINSTANCE dllInstance;
   HANDLE mutexHandle = NULL;
   Windows::SharedMemory< ShMemLayout > shMem;
   std::map< void *,std::list< void * > > *allocMap = nullptr;
+  std::map< WORD,std::tuple< HWND,LPVOID > > *_timers = nullptr;
+
+  VOID CALLBACK timerProc(HWND hWnd, UINT uMsg, UINT_PTR idEvent, DWORD dwTime)
+  {
+    shMem.access([hWnd, uMsg, idEvent, dwTime] (ShMemLayout *p)
+      {
+        PostMessage(p->timers[idEvent].hWnd,WFS_TIMER_EVENT,idEvent,reinterpret_cast< LPARAM >(p->timers[idEvent].lpContext));
+      });
+  }
 }
 
 #define CHECK_IF_STARTED \
@@ -91,6 +108,27 @@ namespace
   \
   if (!lib) \
     return WFS_ERR_INVALID_HSERVICE;
+
+class SynchMsgWnd : public Windows::MsgWnd
+{
+public:
+  explicit SynchMsgWnd(HINSTANCE hInstance, Windows::Synch::Semaphore &sem, HRESULT &hRes, DWORD msgId, LPWFSRESULT *lppResult = NULL) :
+    Windows::MsgWnd(hInstance,[&sem, &hRes, msgId, lppResult] (UINT uMsg, WPARAM, LPARAM lParam)
+      {
+        if (uMsg == msgId)
+        {
+          hRes = reinterpret_cast< LPWFSRESULT >(lParam)->hResult;
+
+          if (lppResult != NULL)
+            *lppResult = reinterpret_cast< LPWFSRESULT >(lParam);
+
+          sem.unlock();
+        }
+      })
+  {
+
+  }
+};
 
 extern "C" HRESULT WINAPI WFSCancelAsyncRequest(HSERVICE hService, REQUESTID RequestID)
 {
@@ -139,15 +177,8 @@ extern "C" HRESULT WINAPI WFSClose(HSERVICE hService)
 
   Windows::Synch::Semaphore sem(0,1);
   HRESULT hRes = WFS_SUCCESS;
-  Windows::MsgWnd wnd(dllInstance,[&sem, &hRes] (UINT uMsg, WPARAM wParam, LPARAM lParam)
-    {
-      if (uMsg == WFS_CLOSE_COMPLETE)
-      {
-        hRes = reinterpret_cast< LPWFSRESULT >(lParam)->hResult;
-        sem.unlock();
-      }
-    });
 
+  SynchMsgWnd wnd(dllInstance,sem,hRes,WFS_CLOSE_COMPLETE);
   wnd.start();
 
   REQUESTID reqId;
@@ -201,15 +232,8 @@ extern "C" HRESULT WINAPI WFSDeregister(HSERVICE hService, DWORD dwEventClass, H
 
   Windows::Synch::Semaphore sem(0,1);
   HRESULT hRes = WFS_SUCCESS;
-  Windows::MsgWnd wnd(dllInstance,[&sem, &hRes] (UINT uMsg, WPARAM wParam, LPARAM lParam)
-  {
-    if (uMsg == WFS_DEREGISTER_COMPLETE)
-    {
-      hRes = reinterpret_cast< LPWFSRESULT >(lParam)->hResult;
-      sem.unlock();
-    }
-  });
 
+  SynchMsgWnd wnd(dllInstance,sem,hRes,WFS_DEREGISTER_COMPLETE);
   wnd.start();
 
   REQUESTID reqId;
@@ -260,21 +284,14 @@ extern "C" HRESULT WINAPI WFSDestroyAppHandle(HAPP hApp)
   return (!idx)? WFS_SUCCESS : WFS_ERR_INVALID_APP_HANDLE;
 }
 
-extern "C" HRESULT WINAPI WFSExecute(HSERVICE hService, DWORD dwCommand, LPVOID lpCmdData, DWORD dwTimeOut, LPWFSRESULT * lppResult)
+extern "C" HRESULT WINAPI WFSExecute(HSERVICE hService, DWORD dwCommand, LPVOID lpCmdData, DWORD dwTimeOut, LPWFSRESULT *lppResult)
 {
   CHECK_IF_STARTED
 
   Windows::Synch::Semaphore sem(0,1);
   HRESULT hRes = WFS_SUCCESS;
-  Windows::MsgWnd wnd(dllInstance,[&sem, &hRes] (UINT uMsg, WPARAM wParam, LPARAM lParam)
-    {
-      if (uMsg == WFS_EXECUTE_COMPLETE)
-      {
-        hRes = reinterpret_cast< LPWFSRESULT >(lParam)->hResult;
-        sem.unlock();
-      }
-    });
 
+  SynchMsgWnd wnd(dllInstance,sem,hRes,WFS_EXECUTE_COMPLETE,lppResult);
   wnd.start();
 
   REQUESTID reqId;
@@ -300,21 +317,14 @@ extern "C" HRESULT WINAPI WFSFreeResult(LPWFSRESULT lpResult)
   return WFMFreeBuffer(lpResult);
 }
 
-extern "C" HRESULT WINAPI WFSGetInfo(HSERVICE hService, DWORD dwCategory, LPVOID lpQueryDetails, DWORD dwTimeOut, LPWFSRESULT * lppResult)
+extern "C" HRESULT WINAPI WFSGetInfo(HSERVICE hService, DWORD dwCategory, LPVOID lpQueryDetails, DWORD dwTimeOut, LPWFSRESULT *lppResult)
 {
   CHECK_IF_STARTED
 
   Windows::Synch::Semaphore sem(0,1);
   HRESULT hRes = WFS_SUCCESS;
-  Windows::MsgWnd wnd(dllInstance,[&sem, &hRes] (UINT uMsg, WPARAM wParam, LPARAM lParam)
-    {
-      if (uMsg == WFS_GETINFO_COMPLETE)
-      {
-        hRes = reinterpret_cast< LPWFSRESULT >(lParam)->hResult;
-        sem.unlock();
-      }
-    });
 
+  SynchMsgWnd wnd(dllInstance,sem,hRes,WFS_GETINFO_COMPLETE,lppResult);
   wnd.start();
 
   REQUESTID reqId;
@@ -349,16 +359,8 @@ extern "C" HRESULT WINAPI WFSLock(HSERVICE hService, DWORD dwTimeOut, LPWFSRESUL
 
   Windows::Synch::Semaphore sem(0,1);
   HRESULT hRes = WFS_SUCCESS;
-  Windows::MsgWnd wnd(dllInstance,[&sem, &hRes, &lppResult] (UINT uMsg, WPARAM wParam, LPARAM lParam)
-    {
-      if (uMsg == WFS_LOCK_COMPLETE)
-      {
-        *lppResult = reinterpret_cast< LPWFSRESULT >(lParam);
-        hRes = reinterpret_cast< LPWFSRESULT >(lParam)->hResult;
-        sem.unlock();
-      }
-    });
 
+  SynchMsgWnd wnd(dllInstance,sem,hRes,WFS_LOCK_COMPLETE);
   wnd.start();
 
   REQUESTID reqId;
@@ -389,15 +391,8 @@ extern "C" HRESULT WINAPI WFSOpen(LPSTR lpszLogicalName, HAPP hApp, LPSTR lpszAp
 
   Windows::Synch::Semaphore sem(0,1);
   HRESULT hRes = WFS_SUCCESS;
-  Windows::MsgWnd wnd(dllInstance,[&sem, &hRes] (UINT uMsg, WPARAM wParam, LPARAM lParam)
-    {
-      if (uMsg == WFS_OPEN_COMPLETE)
-      {
-        hRes = reinterpret_cast< LPWFSRESULT >(lParam)->hResult;
-        sem.unlock();
-      }
-    });
 
+  SynchMsgWnd wnd(dllInstance,sem,hRes,WFS_OPEN_COMPLETE);
   wnd.start();
 
   REQUESTID reqId;
@@ -417,8 +412,6 @@ extern "C" HRESULT WINAPI WFSAsyncOpen(LPSTR lpszLogicalName, HAPP hApp, LPSTR l
   if (!lpszLogicalName || !lpszAppID || !lphService || !lpSrvcVersion || !lpSPIVersion || !lpRequestID)
     return WFS_ERR_INVALID_POINTER;
 
-  HRESULT res = WFS_SUCCESS;
-  int idx = 0;
   *lphService = 0;
   *lpRequestID = 0;
   clearMem(*lpSPIVersion);
@@ -471,7 +464,7 @@ extern "C" HRESULT WINAPI WFSAsyncOpen(LPSTR lpszLogicalName, HAPP hApp, LPSTR l
     lib->handle(),
     XFS::VersionRange(XFS::Version(3,0),XFS::Version(3,30)).value(),
     lpSPIVersion,
-    XFS::VersionRange(XFS::Version(3,0),XFS::Version(3,30)).value(),
+    dwSrvcVersionsRequired,
     lpSrvcVersion);
 }
 
@@ -481,15 +474,8 @@ extern "C" HRESULT WINAPI WFSRegister(HSERVICE hService, DWORD dwEventClass, HWN
 
   Windows::Synch::Semaphore sem(0,1);
   HRESULT hRes = WFS_SUCCESS;
-  Windows::MsgWnd wnd(dllInstance,[&sem, &hRes] (UINT uMsg, WPARAM wParam, LPARAM lParam)
-    {
-      if (uMsg == WFS_REGISTER_COMPLETE)
-      {
-        hRes = reinterpret_cast< LPWFSRESULT >(lParam)->hResult;
-        sem.unlock();
-      }
-    });
 
+  SynchMsgWnd wnd(dllInstance,sem,hRes,WFS_REGISTER_COMPLETE);
   wnd.start();
 
   REQUESTID reqId;
@@ -581,15 +567,8 @@ extern "C" HRESULT WINAPI WFSUnlock(HSERVICE hService)
 
   Windows::Synch::Semaphore sem(0,1);
   HRESULT hRes = WFS_SUCCESS;
-  Windows::MsgWnd wnd(dllInstance,[&sem, &hRes] (UINT uMsg, WPARAM wParam, LPARAM lParam)
-    {
-      if (uMsg == WFS_UNLOCK_COMPLETE)
-      {
-        hRes = reinterpret_cast< LPWFSRESULT >(lParam)->hResult;
-        sem.unlock();
-      }
-    });
 
+  SynchMsgWnd wnd(dllInstance,sem,hRes,WFS_UNLOCK_COMPLETE);
   wnd.start();
 
   REQUESTID reqId;
@@ -613,7 +592,7 @@ extern "C" HRESULT WINAPI WFMSetTraceLevel(HSERVICE hService, DWORD dwTraceLevel
   return WFS_SUCCESS;
 }
 
-extern "C" HRESULT WINAPI WFMAllocateBuffer(ULONG ulSize, ULONG ulFlags, LPVOID *lppvData)
+extern "C" HRESULT WINAPI WFMAllocateBuffer(ULONG ulSize, ULONG, LPVOID *lppvData)
 {
   Windows::Synch::Locker< HANDLE > lock(mutexHandle);
 
@@ -690,7 +669,25 @@ extern "C" HRESULT WINAPI WFMGetTraceLevel(HSERVICE hService, LPDWORD lpdwTraceL
 
 extern "C" HRESULT WINAPI WFMKillTimer(WORD wTimerID)
 {
-  return WFS_SUCCESS;
+  HRESULT hRes = WFS_SUCCESS;
+  shMem.access([&hRes, wTimerID]  (ShMemLayout *p)
+    {
+      if (p->timers[wTimerID].hWnd == NULL)
+      {
+        hRes = WFS_ERR_INVALID_TIMER;
+        return;
+      }
+
+      if (!KillTimer(NULL,static_cast< UINT_PTR >(wTimerID)))
+      {
+        hRes = WFS_ERR_INTERNAL_ERROR;
+        return;
+      }
+
+      p->timers[wTimerID].hWnd = NULL;
+    });
+
+  return hRes;
 }
 
 extern "C" HRESULT WINAPI WFMOutputTraceData(LPSTR lpszData)
@@ -705,52 +702,299 @@ extern "C" HRESULT WINAPI WFMReleaseDLL(HPROVIDER hProvider)
 
 extern "C" HRESULT WINAPI WFMSetTimer(HWND hWnd, LPVOID lpContext, DWORD dwTimeVal, LPWORD lpwTimerID)
 {
-  return WFS_SUCCESS;
+  if (!hWnd)
+    return WFS_ERR_INVALID_HWND;
+
+  if (!lpwTimerID)
+    return WFS_ERR_INVALID_POINTER;
+
+  if (!dwTimeVal)
+    return WFS_ERR_INVALID_DATA;
+
+  HRESULT hRes = WFS_SUCCESS;
+  shMem.access([&hRes, hWnd, lpContext, dwTimeVal] (ShMemLayout *p)
+    {
+      auto it = std::find_if(std::begin(p->timers),std::end(p->timers),[] (const ShMemLayout::Timer &t) { return t.hWnd == NULL; });
+
+      if (it == std::end(p->timers))
+      {
+        hRes = WFS_ERR_INTERNAL_ERROR;
+        return;
+      }
+
+      it->hWnd = hWnd;
+      it->lpContext = lpContext;
+
+      UINT_PTR id = SetTimer(NULL,static_cast< UINT_PTR >(std::distance(std::begin(p->timers),it)),dwTimeVal,timerProc);
+      if (!id)
+      {
+        hRes = WFS_ERR_INTERNAL_ERROR;
+        it->hWnd = 0;
+        return;
+      }
+    });
+
+  return hRes;
 }
 
 extern "C" HRESULT WINAPI WFMCloseKey(HKEY hKey)
 {
-  return WFS_SUCCESS;
+  switch (RegCloseKey(hKey))
+  {
+    case ERROR_SUCCESS:
+      return WFS_SUCCESS;
+
+    case ERROR_FILE_NOT_FOUND:
+      return WFS_ERR_CFG_INVALID_HKEY;
+
+    default:
+      return WFS_ERR_INTERNAL_ERROR;
+  }
 }
 
 extern "C" HRESULT WINAPI WFMCreateKey(HKEY hKey, LPSTR lpszSubKey, PHKEY phkResult, LPDWORD lpdwDisposition)
 {
-  return WFS_SUCCESS;
+  if (!lpszSubKey || !phkResult || !lpdwDisposition)
+    return WFS_ERR_INVALID_POINTER;
+
+  DWORD dwDisposition = *lpdwDisposition = 0;
+  CHAR subKeyBuf[1024];
+
+  SecureZeroMemory(subKeyBuf,1024 * sizeof(CHAR));
+
+  if (hKey == WFS_CFG_HKEY_XFS_ROOT)
+  {
+    strcpy_s(subKeyBuf,"WOSA/XFS_ROOT\\");
+    hKey = HKEY_CLASSES_ROOT;
+  }
+  else if (hKey == WFS_CFG_HKEY_MACHINE_XFS_ROOT)
+  {
+    strcpy_s(subKeyBuf,"SOFTWARE\\XFS\\");
+    hKey = HKEY_LOCAL_MACHINE;
+  }
+  else if (hKey == WFS_CFG_HKEY_USER_DEFAULT_XFS_ROOT)
+  {
+    strcpy_s(subKeyBuf,".DEFAULT\\XFS\\");
+    hKey = HKEY_USERS;
+  }
+
+  strcat_s(subKeyBuf,lpszSubKey);
+
+  switch (RegCreateKeyExA(hKey,subKeyBuf,0,NULL,REG_OPTION_NON_VOLATILE,KEY_ALL_ACCESS,NULL,phkResult,&dwDisposition))
+  {
+    case ERROR_SUCCESS:
+      switch (dwDisposition)
+      {
+        case REG_CREATED_NEW_KEY:
+          *lpdwDisposition = WFS_CFG_CREATED_NEW_KEY;
+          break;
+
+        case REG_OPENED_EXISTING_KEY:
+          *lpdwDisposition = WFS_CFG_OPENED_EXISTING_KEY;
+          break;
+
+        default:
+          break;
+      }
+
+      return WFS_SUCCESS;
+
+    case ERROR_FILE_NOT_FOUND:
+      return WFS_ERR_CFG_INVALID_HKEY;
+
+    case ERROR_PATH_NOT_FOUND:
+      return WFS_ERR_CFG_INVALID_SUBKEY;
+
+    default:
+      return WFS_ERR_INTERNAL_ERROR;
+  }
 }
 
 extern "C" HRESULT WINAPI WFMDeleteKey(HKEY hKey, LPSTR lpszSubKey)
 {
-  return WFS_SUCCESS;
+  if (!lpszSubKey)
+    return WFS_ERR_INVALID_POINTER;
+
+  switch (RegDeleteKeyExA(hKey,lpszSubKey,0,0))
+  {
+    case ERROR_SUCCESS:
+      return WFS_SUCCESS;
+
+    case ERROR_FILE_NOT_FOUND:
+      return WFS_ERR_CFG_INVALID_HKEY;
+
+    case ERROR_KEY_HAS_CHILDREN:
+      return WFS_ERR_CFG_KEY_NOT_EMPTY;
+
+    case ERROR_PATH_NOT_FOUND:
+      return WFS_ERR_CFG_INVALID_SUBKEY;
+
+    default:
+      return WFS_ERR_INTERNAL_ERROR;
+  }
 }
 
 extern "C" HRESULT WINAPI WFMDeleteValue(HKEY hKey, LPSTR lpszValue)
 {
-  return WFS_SUCCESS;
-}
+  if (!lpszValue)
+    return WFS_ERR_INVALID_POINTER;
+
+  switch (RegDeleteValueA(hKey,lpszValue))
+  {
+    case ERROR_SUCCESS:
+      return WFS_SUCCESS;
+
+    case ERROR_FILE_NOT_FOUND:
+      return WFS_ERR_CFG_INVALID_HKEY;
+
+    case ERROR_PATH_NOT_FOUND:
+      return WFS_ERR_CFG_INVALID_VALUE;
+
+    default:
+      return WFS_ERR_INTERNAL_ERROR;
+  }}
 
 extern "C" HRESULT WINAPI WFMEnumKey(HKEY hKey, DWORD iSubKey, LPSTR lpszName, LPDWORD lpcchName, PFILETIME lpftLastWrite)
 {
-  return WFS_SUCCESS;
+  if (!lpszName || !lpcchName || !lpftLastWrite)
+    return WFS_ERR_INVALID_POINTER;
+
+  SecureZeroMemory(lpszName,*lpcchName);
+
+  switch (RegEnumKeyExA(hKey,iSubKey,lpszName,lpcchName,NULL,NULL,NULL,lpftLastWrite))
+  {
+    case ERROR_SUCCESS:
+      return WFS_SUCCESS;
+
+    case ERROR_FILE_NOT_FOUND:
+      return WFS_ERR_CFG_INVALID_HKEY;
+
+    case ERROR_MORE_DATA:
+      return WFS_ERR_CFG_NAME_TOO_LONG;
+
+    case ERROR_NO_MORE_ITEMS:
+      return WFS_ERR_CFG_NO_MORE_ITEMS;
+
+    default:
+      return WFS_ERR_INTERNAL_ERROR;
+  }
 }
 
 extern "C" HRESULT WINAPI WFMEnumValue(HKEY hKey, DWORD iValue, LPSTR lpszValue, LPDWORD lpcchValue, LPSTR lpszData, LPDWORD lpcchData)
 {
-  return WFS_SUCCESS;
+  if (!lpszValue || !lpcchValue || !lpszData || !lpcchData)
+    return WFS_ERR_INVALID_POINTER;
+
+  SecureZeroMemory(lpszValue,*lpcchValue);
+  SecureZeroMemory(lpszData,*lpcchData);
+
+  switch (RegEnumValueA(hKey,iValue,lpszValue,lpcchValue,NULL,NULL,reinterpret_cast< BYTE * >(lpszData),lpcchData))
+  {
+    case ERROR_SUCCESS:
+      return WFS_SUCCESS;
+
+    case ERROR_FILE_NOT_FOUND:
+      return WFS_ERR_CFG_INVALID_HKEY;
+
+    case ERROR_PATH_NOT_FOUND:
+      return WFS_ERR_CFG_INVALID_SUBKEY;
+
+    case ERROR_MORE_DATA:
+      return WFS_ERR_CFG_VALUE_TOO_LONG;
+
+    case ERROR_NO_MORE_ITEMS:
+      return WFS_ERR_CFG_NO_MORE_ITEMS;
+
+    default:
+      return WFS_ERR_INTERNAL_ERROR;
+  }
 }
 
 extern "C" HRESULT WINAPI WFMOpenKey(HKEY hKey, LPSTR lpszSubKey, PHKEY phkResult)
 {
-  return WFS_SUCCESS;
+  if (!lpszSubKey || !phkResult)
+    return WFS_ERR_INVALID_POINTER;
+
+  CHAR subKeyBuf[MAX_PATH];
+
+  SecureZeroMemory(subKeyBuf,1024 * sizeof(CHAR));
+
+  if (hKey == WFS_CFG_HKEY_XFS_ROOT)
+  {
+    strcpy_s(subKeyBuf,"WOSA/XFS_ROOT\\");
+    hKey = HKEY_CLASSES_ROOT;
+  }
+  else if (hKey == WFS_CFG_HKEY_MACHINE_XFS_ROOT)
+  {
+    strcpy_s(subKeyBuf,"SOFTWARE\\XFS\\");
+    hKey = HKEY_LOCAL_MACHINE;
+  }
+  else if (hKey == WFS_CFG_HKEY_USER_DEFAULT_XFS_ROOT)
+  {
+    strcpy_s(subKeyBuf,".DEFAULT\\XFS\\");
+    hKey = HKEY_USERS;
+  }
+
+  strcat_s(subKeyBuf,lpszSubKey);
+
+  switch (RegOpenKeyA(hKey,subKeyBuf,phkResult))
+  {
+    case ERROR_SUCCESS:
+      return WFS_SUCCESS;
+
+    case ERROR_FILE_NOT_FOUND:
+      return WFS_ERR_CFG_INVALID_HKEY;
+
+    case ERROR_PATH_NOT_FOUND:
+      return WFS_ERR_CFG_INVALID_SUBKEY;
+
+    default:
+      return WFS_ERR_INTERNAL_ERROR;
+  }
 }
 
 extern "C" HRESULT WINAPI WFMQueryValue(HKEY hKey, LPSTR lpszValueName, LPSTR lpszData, LPDWORD lpcchData)
 {
-  return WFS_SUCCESS;
+  if (!lpszValueName || !lpszData || !lpcchData)
+    return WFS_ERR_INVALID_POINTER;
+
+  SecureZeroMemory(lpszData,*lpcchData);
+
+  switch (RegQueryValueExA(hKey,lpszValueName,NULL,NULL,reinterpret_cast< BYTE * >(lpszData),lpcchData))
+  {
+    case ERROR_SUCCESS:
+      return WFS_SUCCESS;
+
+    case ERROR_FILE_NOT_FOUND:
+      return WFS_ERR_CFG_INVALID_HKEY;
+
+    case ERROR_PATH_NOT_FOUND:
+      return WFS_ERR_CFG_INVALID_NAME;
+
+    case ERROR_MORE_DATA:
+      return WFS_ERR_CFG_VALUE_TOO_LONG;
+
+    default:
+      return WFS_ERR_INTERNAL_ERROR;
+  }
 }
 
 extern "C" HRESULT WINAPI WFMSetValue(HKEY hKey, LPSTR lpszValueName, LPSTR lpszData, DWORD cchData)
 {
-  return WFS_SUCCESS;
+  if (!lpszValueName || !lpszData)
+    return WFS_ERR_INVALID_POINTER;
+
+  switch (RegSetValueExA(hKey,lpszValueName,0,REG_SZ,reinterpret_cast< BYTE * >(lpszData),cchData))
+  {
+    case ERROR_SUCCESS:
+      return WFS_SUCCESS;
+
+    case ERROR_FILE_NOT_FOUND:
+      return WFS_ERR_CFG_INVALID_HKEY;
+
+    default:
+      return WFS_ERR_INTERNAL_ERROR;
+  }
 }
 
 extern "C" BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID)
