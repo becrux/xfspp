@@ -11,11 +11,21 @@
 #include <fstream>
 
 #include "log/log.hpp"
-#include "spdlog/spdlog.h"
+#include "win32/registry.hpp"
 
 using namespace Log;
 
-extern spdlog::logger *logger;
+std::string Logger::getPathFromRegistry()
+{
+  return Windows::Registry::Key(L"Software\\xfspp",HKEY_LOCAL_MACHINE).value< std::string >(L"logFileName","xfspp_mgr.log");
+}
+
+std::ostream &Logger::streamInstance()
+{
+  static std::ofstream f(getPathFromRegistry(),std::ios::out);
+
+  return f;
+}
 
 Logger::Logger()
 {
@@ -27,11 +37,18 @@ Logger::~Logger()
   SYSTEMTIME st;
   GetLocalTime(&st);
 
-  logger->debug("{0}-{1}-{2}T{3}:{4}:{5}.{6}\t{7:#06x}\t{8:#06x}\t{9}",
-    st.wYear,st.wMonth,st.wDay,
-    st.wHour,st.wMinute,st.wSecond,st.wMilliseconds,
-    GetCurrentProcessId(),GetCurrentThreadId(),
-    str());
+  streamInstance() << 
+    st.wYear << "-" <<
+    std::setw(2) << std::setfill('0') << st.wMonth << "-" <<
+    std::setw(2) << std::setfill('0') << st.wDay << "-" <<
+    "T" <<
+    std::setw(2) << std::setfill('0') << st.wHour << ":" <<
+    std::setw(2) << std::setfill('0') << st.wMinute << ":" <<
+    std::setw(2) << std::setfill('0') << st.wSecond << "." <<
+    st.wMilliseconds << "\t" <<
+    std::setw(6) << std::setfill('0') << GetCurrentProcessId() << "\t" <<
+    std::setw(6) << std::setfill('0') << GetCurrentThreadId() << "\t" <<
+    str() << std::endl;
 }
 
 Method::Method(const std::string &fName, const std::string &params) :

@@ -6,6 +6,7 @@ set(SOURCES
   ../win32/thread.cpp
   ../win32/timer.cpp
   ../win32/error.cpp
+  ../win32/registry.cpp
   ../log/log.cpp
   dispatcher.cpp
   task.cpp

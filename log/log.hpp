@@ -10,6 +10,7 @@
 #ifndef __LOG_HPP__
 #define __LOG_HPP__
 
+#include <fstream>
 #include <sstream>
 #include <string>
 
@@ -28,9 +29,13 @@ namespace Log
 {
   class Logger: public std::ostringstream
   {
+    static std::string getPathFromRegistry();
+
   public:
     explicit Logger();
     ~Logger();
+
+    static std::ostream &streamInstance();
   };
 
   class Method

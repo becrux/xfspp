@@ -9,9 +9,6 @@
 #include "xfsspi.h"
 
 #include "win32/synch.hpp"
-#include "spdlog/spdlog.h"
-
-spdlog::logger *logger = nullptr;
 
 namespace
 {
@@ -20,7 +17,6 @@ namespace
 
   struct Context
   {
-    std::shared_ptr< spdlog::logger > logger;
   } *_ctx = nullptr;
 
   void initializeContext()
@@ -30,11 +26,7 @@ namespace
       Windows::Synch::Locker< HANDLE > lock(mutexHandle);
 
       if (!_ctx)
-      {
         _ctx = new Context;
-        _ctx->logger = spdlog::basic_logger_mt("basic_logger", "logs/basic.txt");
-        logger = _ctx->logger.get();
-      }
     }
   }
 }

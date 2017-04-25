@@ -13,8 +13,10 @@
 #include <string>
 #include <map>
 #include <vector>
+#include <sstream>
 
 #include "win32/handle.hpp"
+#include "util/memory.hpp"
 
 namespace Windows
 {
@@ -37,6 +39,29 @@ namespace Windows
       std::vector< std::wstring > subKeys() const;
 
       std::map< std::wstring,std::tuple< DWORD,std::vector< BYTE > > > values() const;
+
+      template< typename T >
+      T value(const std::wstring &sValueName, const std::wstring &sSubKey, T &&defaultValue = T()) const
+      {
+        BYTE buf[1024];
+        DWORD bufSize = 1024;
+
+        clearMem(buf);
+        if (RegGetValue(handle(),sSubKey.c_str(),sValueName.c_str(),RRF_RT_ANY | RRF_NOEXPAND,NULL,buf,&bufSize) != ERROR_SUCCESS)
+          return defaultValue;
+
+        T res;
+        std::istringstream iss(std::string(buf,buf + bufSize));
+        iss >> res;
+
+        return res;
+      }
+
+      template< typename T >
+      T value(const std::wstring &sValueName, T &&defaultValue = T()) const
+      {
+        return value(sValueName,std::wstring(),std::forward< T >(defaultValue));
+      }
 
       Error remove(const std::wstring &sSubPath);
       Error removeValue(const std::wstring &sValueName);
