@@ -1,5 +1,5 @@
 exclude:
-- /ext/spdlog/.*
+- /ext/.*
 component_depth: 1
 languages:
 - cpp

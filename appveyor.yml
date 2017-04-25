@@ -3,6 +3,14 @@ image:
 
 environment:
   matrix:
+    - GENERATOR: "Visual Studio 11 2012"
+      PLATFORM: MSVC2012
+      CONFIG: Debug
+
+    - GENERATOR: "Visual Studio 11 2012"
+      PLATFORM: MSVC2012
+      CONFIG: Release
+
     - GENERATOR: "Visual Studio 12 2013"
       PLATFORM: MSVC
       CONFIG: Debug
@@ -58,10 +66,13 @@ install:
   - if [%PLATFORM%]==[MinGW-w64] set PATH=C:\mingw32\bin;%PATH%
   - if [%PLATFORM%]==[CLang] set PATH="C:\Program Files\LLVM\bin";%PATH%
   - if [%PLATFORM%]==[CLang] clang-cl -v
+  - ps: If ($Env:PLATFORM -eq 'MSVC2012') { (New-Object Net.WebClient).DownloadFile("https://download.microsoft.com/download/5/1/6/5169AA1E-D7A4-4DC2-A9AE-0A9DFD2601AB/vc_compilerCTPNov2012.exe", "$env:APPVEYOR_BUILD_FOLDER\vc_compilerCTPNov2012.exe") ; "$env:APPVEYOR_BUILD_FOLDER\vc_compilerCTPNov2012.exe" /install /quiet /norestart }
 
 build_script:
   - mkdir build
   - cd build
   - if [%PLATFORM%]==[CLang] cmake -G "%GENERATOR%" -T"LLVM-vs2014" ..
-  - if NOT [%PLATFORM%]==[CLang] cmake -G "%GENERATOR%" ..
+  - if [%PLATFORM%]==[MSVC2012] cmake -G "%GENERATOR%" -T"v120_CTP_Nov2012" ..
+  - if [%PLATFORM%]==[MSVC] cmake -G "%GENERATOR%" ..
+  - if [%PLATFORM%]==[MinGW-w64] cmake -G "%GENERATOR%" ..
   - cmake --build . --config "%CONFIG%"

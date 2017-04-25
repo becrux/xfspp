@@ -14,7 +14,7 @@ add_definitions(
 
 set(CMAKE_VERBOSE_MAKEFILE TRUE)
 
-include_directories(${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/cen/320 ${CMAKE_SOURCE_DIR}/ext)
+include_directories(${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/cen/320)
 
 if(MSVC)
   # /GF - String pooling
