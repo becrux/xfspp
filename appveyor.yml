@@ -74,7 +74,7 @@ install:
   - if [%PLATFORM%]==[MinGW-w64] set PATH=C:\mingw32\bin;%PATH%
   - if [%PLATFORM%]==[CLang] set PATH="C:\Program Files\LLVM\bin";%PATH%
   - if [%PLATFORM%]==[CLang] clang-cl -v
-  - ps: If ($Env:PLATFORM -eq 'MSVC2012') { (New-Object Net.WebClient).DownloadFile("https://download.microsoft.com/download/5/1/6/5169AA1E-D7A4-4DC2-A9AE-0A9DFD2601AB/vc_compilerCTPNov2012.exe", "$env:APPVEYOR_BUILD_FOLDER\vc_compilerCTPNov2012.exe") ; & vc_compilerCTPNov2012.exe /install /quiet /norestart /log vc_compilerCTPNov2012.log }
+  - ps: If ($Env:PLATFORM -eq 'MSVC2012') { (New-Object Net.WebClient).DownloadFile("https://download.microsoft.com/download/5/1/6/5169AA1E-D7A4-4DC2-A9AE-0A9DFD2601AB/vc_compilerCTPNov2012.exe", "$env:APPVEYOR_BUILD_FOLDER\vc_compilerCTPNov2012.exe") ; & "$env:APPVEYOR_BUILD_FOLDER\vc_compilerCTPNov2012.exe" /install /quiet /norestart /log vc_compilerCTPNov2012.log }
   - ps: If ($Env:PLATFORM -eq 'MSVC2012') { Get-Content vc_compilerCTPNov2012.log | foreach { Write-Output $_ } }
 
 build_script:
