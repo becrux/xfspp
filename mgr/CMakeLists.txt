@@ -1,5 +1,3 @@
-cmake_minimum_required(VERSION 3.0.0)
-
 set(SOURCES
   ../win32/registry.cpp
   ../win32/thread.cpp

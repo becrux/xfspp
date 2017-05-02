@@ -17,9 +17,11 @@ set(CMAKE_VERBOSE_MAKEFILE TRUE)
 include_directories(${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/cen/320)
 
 if(MSVC)
+  set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+
   # /GF - String pooling
   # /MP - Parallel build
-  set(CMAKE_CXX_FLAGS "/W4 /EHa /GR /DWIN32 /D_WINDOWS /GR")
+  set(CMAKE_CXX_FLAGS "/Wall /wd4710 /wd4820 /wd4668 /EHa /GR /fp:fast /DWIN32 /D_WINDOWS")
   
   # /Zi - Create debugging information
   # /Od - Disable optimization
@@ -85,5 +87,27 @@ endforeach()
 message(STATUS "Environment variables:")
 execute_process(COMMAND "${CMAKE_COMMAND}" "-E" "environment")
 
+execute_process(COMMAND ${CMAKE_COMMAND} "-E" "make_directory" "${CMAKE_SOURCE_DIR}/ext" WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+
+if(NOT EXISTS ${CMAKE_SOURCE_DIR}/ext/googletest)
+  message(STATUS "Downloading latest GoogleTest release ...")
+  file(DOWNLOAD https://github.com/google/googletest/archive/release-1.8.0.zip ${CMAKE_BINARY_DIR}/gtest.zip)
+  execute_process(COMMAND ${CMAKE_COMMAND} "-E" "tar" "xvf" "${CMAKE_BINARY_DIR}/gtest.zip" WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/ext)
+  execute_process(COMMAND ${CMAKE_COMMAND} "-E" "rename" "googletest-release-1.8.0" "googletest" WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/ext)
+endif()
+
+if(NOT EXISTS ${CMAKE_SOURCE_DIR}/ext/sqlite)
+  message(STATUS "Downloading latest SQLite release ...")
+  file(DOWNLOAD https://www.sqlite.org/2017/sqlite-amalgamation-3180000.zip ${CMAKE_BINARY_DIR}/sqlite.zip)
+  execute_process(COMMAND ${CMAKE_COMMAND} "-E" "tar" "xvf" "${CMAKE_BINARY_DIR}/sqlite.zip" WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/ext)
+  execute_process(COMMAND ${CMAKE_COMMAND} "-E" "rename" "sqlite-amalgamation-3180000" "sqlite" WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/ext)
+endif()
+
+add_subdirectory(${CMAKE_SOURCE_DIR}/ext/googletest)
+
+enable_testing()
+include_directories(${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR})
+
 add_subdirectory(mgr)
 add_subdirectory(sp)
+add_subdirectory(tests)
