@@ -20,7 +20,7 @@ include_directories(${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/cen/320)
 if(MSVC)
   set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 
-  if(${CMAKE_GENERATOR_TOOLSET} EQUAL "v120_CTP_Nov2012")
+  if(${CMAKE_GENERATOR_TOOLSET} MATCHES "v120_CTP_Nov2012")
     add_definitions(-DGTEST_HAS_TR1_TUPLE=0)
   endif()
 
