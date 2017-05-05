@@ -42,6 +42,7 @@ add_definitions(
   -DWINVER=0x0600
   -D_WIN32_WINNT=0x0600
   -DGTEST_HAS_PTHREAD=0
+  -DGTEST_OS_WINDOWS=1
   -DWIN32
   -D_WINDOWS
 )
@@ -67,15 +68,6 @@ if(MSVC)
   set(CMAKE_EXE_LINKER_FLAGS_RELEASE "/RELEASE /OPT:REF /LTCG /OPT:ICF /INCREMENTAL:NO")
   set(CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO "/DEBUG /RELEASE /LTCG /OPT:REF /OPT:ICF /INCREMENTAL:NO /DEBUGTYPE:cv,fixup")
   set(CMAKE_EXE_LINKER_FLAGS_MINSIZEREL "/RELEASE /LTCG /OPT:REF /OPT:ICF /INCREMENTAL:NO")
-  
-  if(${CMAKE_GENERATOR_TOOLSET} MATCHES "^LLVM.*")
-    set(CLANG_FLAGS "-Xclang -std=c++11")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CLANG_FLAGS}")
-    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} ${CLANG_FLAGS}")
-    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} ${CLANG_FLAGS}")
-    set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} ${CLANG_FLAGS}")
-    set(CMAKE_CXX_FLAGS_MINSIZEREL "${CMAKE_CXX_FLAGS_MINSIZEREL} ${CLANG_FLAGS}")
-  endif()
 else()
   set(CMAKE_CXX_FLAGS "-frtti -fexceptions -std=c++11 -std=gnu++11 -pedantic -Wall -Wextra -Wuninitialized -Wold-style-cast -Woverloaded-virtual -Wnoexcept -Wnon-virtual-dtor -Winit-self -Wmissing-include-dirs -Wunused-parameter -Wctor-dtor-privacy -Wswitch-default -Wshadow -Wno-unknown-pragmas -Wundef -Wredundant-decls")
   set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g -g3 ${CMAKE_CXX_FLAGS}")
