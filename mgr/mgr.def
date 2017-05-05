@@ -1,4 +1,4 @@
-LIBRARY xfsmgr
+LIBRARY msxfs
 EXPORTS
   DllMain
   WFSCancelAsyncRequest

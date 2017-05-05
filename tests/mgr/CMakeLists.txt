@@ -5,8 +5,11 @@ add_executable(startupTests
   ../../win32/error.cpp
   ../../win32/registry.cpp
   ../../log/log.cpp
+  ../../common/version.cpp
 )
 
 target_link_libraries(startupTests gtest gtest_main)
 
-add_test(NAME startupTests COMMAND startupTests)
+add_dependencies(startupTests xfsmgr)
+
+add_test(NAME startup_tests COMMAND startupTests ${CMAKE_BINARY_DIR}/out/msxfs.dll)
