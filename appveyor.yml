@@ -84,3 +84,6 @@ build_script:
   - if [%PLATFORM%]==[MSVC] cmake -G "%GENERATOR%" ..
   - if [%PLATFORM%]==[MinGW-w64] cmake -G "%GENERATOR%" ..
   - cmake --build . --config "%CONFIG%"
+
+test_script:
+  - cmake --build . --config %CONFIG% --target RUN_TESTS
