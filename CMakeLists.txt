@@ -30,6 +30,7 @@ if(NOT (${CMAKE_GENERATOR_TOOLSET} MATCHES "^LLVM.*"))
   endif()
 
   SET(BUILD_GMOCK OFF CACHE BOOL "Disable GMock" FORCE)
+  SET(BUILD_GTEST ON CACHE BOOL "Enable GTest" FORCE)
   add_subdirectory(${CMAKE_SOURCE_DIR}/ext/googletest)
 
   enable_testing()
