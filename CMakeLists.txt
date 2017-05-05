@@ -28,7 +28,8 @@ if(NOT (${CMAKE_GENERATOR_TOOLSET} MATCHES "^LLVM.*"))
   if(MSVC AND (${CMAKE_GENERATOR_TOOLSET} MATCHES "^v120_CTP_Nov2012.*"))
     add_definitions(-DGTEST_HAS_TR1_TUPLE=0 -D_VARIADIC_MAX=10)
   endif()
-	
+
+  SET(BUILD_GMOCK OFF CACHE BOOL "Disable GMock" FORCE)
   add_subdirectory(${CMAKE_SOURCE_DIR}/ext/googletest)
 
   enable_testing()
