@@ -92,7 +92,7 @@ TEST(MgrLoader, AlreadyStarted)
 
 int wmain(int argc, wchar_t **argv, wchar_t **envp)
 {
-  Windows::Library l{ std::wstring(argv[1]) };
+  Windows::Library l((std::wstring(argv[1])));
   lib = &l;
   
   ::testing::InitGoogleTest(&argc,argv);
