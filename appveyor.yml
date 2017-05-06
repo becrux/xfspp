@@ -86,4 +86,4 @@ build_script:
   - cmake --build . --config "%CONFIG%"
 
 test_script:
-  - ctest --build-config "%CONFIG%"
+  - ctest -VV --build-config "%CONFIG%"
