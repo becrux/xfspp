@@ -1,9 +1,13 @@
-exclude:
-- /ext/.*
-- /tests/.*
 component_depth: 1
+
 languages:
-- cpp
-test:
-  include:
-    - /tests/.*
+  - name: cpp
+    
+    production:
+      exclude:
+        - /ext/.*
+        - /tests/.*
+
+    test:
+      include:
+        - /tests/.*
