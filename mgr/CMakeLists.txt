@@ -17,6 +17,7 @@ file(GLOB_RECURSE HEADERS "${CMAKE_SOURCE_DIR}/*.h*")
 
 add_library(xfsmgr SHARED ${SOURCES} ${HEADERS})
 set_target_properties(xfsmgr PROPERTIES OUTPUT_NAME "msxfs")
+set_target_properties(xfsmgr PROPERTIES PREFIX "")
 
 target_link_libraries(xfsmgr rpcrt4 shlwapi)
 
