@@ -89,7 +89,7 @@ TEST_CASE("StartUp", "[XFS Manager]")
   }
 }
 
-int wmain(int argc, wchar_t **argv, wchar_t **envp)
+extern "C" int wmain(int argc, wchar_t **argv, wchar_t **envp)
 {
   Windows::Library l((std::wstring(argv[1])));
   lib = &l;
