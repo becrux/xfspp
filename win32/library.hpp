@@ -11,7 +11,7 @@
 #define __LIBRARY_HPP__
 
 #include <string>
-#include <exception>
+#include <stdexcept>
 
 #include "win32/handle.hpp"
 

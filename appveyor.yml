@@ -83,8 +83,27 @@ build_script:
   - if [%PLATFORM%]==[MSVC2012] cmake -G "%GENERATOR%" -T"v120_CTP_Nov2012" ..
   - if [%PLATFORM%]==[MSVC] cmake -G "%GENERATOR%" ..
   - if [%PLATFORM%]==[MinGW-w64] cmake -G "%GENERATOR%" ..
-  - cmake --build . --config "%CONFIG%"
+  - if [%PLATFORM%]==[MinGW-w64] (cmake --build . --config "%CONFIG%") else (cmake --build . --config "%CONFIG%" /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll")
 
 test_script:
-  - if [%PLATFORM%]==[MinGW-w64] set PATH=C:\mingw32\bin;%PATH%
-  - ctest -VV --build-config "%CONFIG%"
+  - ps: >-
+        $failure = 0;
+        try 
+        {
+            ctest -VV --build-config ($env:CONFIG) --no-compress-output --output-on-failure --dashboard "Test"
+            $failure = $lastExitCode;
+        }
+        catch 
+        {
+            $failure = 1;
+        }
+        finally
+        {
+            Copy-Item Testing\$(Get-Content Testing\TAG -TotalCount 1)\*.xml test.xml;
+            msxsl test.xml admin/ctest-to-junit.xsl -o junit.xml;
+            $wc = New-Object 'System.Net.WebClient';
+            $wc.UploadFile("https://ci.appveyor.com/api/testresults/junit/$($env:APPVEYOR_JOB_ID)", (Resolve-Path .\junit.xml));
+        }
+        if ($failure -ne 0) {
+            exit $failure;
+        }
