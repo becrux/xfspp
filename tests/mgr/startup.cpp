@@ -1,3 +1,11 @@
+/* tests/mgr/startup.cpp
+ *
+ * Copyright (C) 2007 Antonio Di Monaco
+ *
+ * This software may be modified and distributed under the terms
+ * of the MIT license.  See the LICENSE file for details.
+ */
+
 #include <memory>
 
 #define CATCH_CONFIG_RUNNER
@@ -86,6 +94,20 @@ TEST_CASE("StartUp", "[XFS Manager]")
         "WFSStartUp",
         vr.value(),
         &xfsV) == WFS_ERR_ALREADY_STARTED);
+  }
+
+  SECTION("cleanup")
+  {
+    XFS::VersionRange vr(XFS::Version(3,20),XFS::Version(3,20));
+
+    REQUIRE(lib->call< HRESULT >("WFSCleanUp") == WFS_SUCCESS);
+  }
+
+  SECTION("cleanup when not started")
+  {
+    XFS::VersionRange vr(XFS::Version(3,20),XFS::Version(3,20));
+
+    REQUIRE(lib->call< HRESULT >("WFSCleanUp") == WFS_ERR_NOT_STARTED);
   }
 }
 

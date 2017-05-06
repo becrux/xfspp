@@ -14,6 +14,7 @@
 #include <string>
 
 #include <windows.h>
+#include <rpc.h>
 
 namespace Windows
 {

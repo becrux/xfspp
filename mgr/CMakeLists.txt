@@ -9,6 +9,7 @@ set(SOURCES
   ../win32/shmem.cpp
   ../log/log.cpp
   ../common/version.cpp
+  ../util/string.cpp
   main.cpp
   mgr.def
 )

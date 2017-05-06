@@ -15,13 +15,13 @@ Timer::Timer(int timeout, std::function< void () > f) :
   Handle<>(NULL,nullCloseHandle),
   _thread([this, timeout, f] ()
     {
-      ::Log::Method m(__LAMBDA_FUNCSIG__("Timer"),LOG_STRING("timeout = " << timeout));
+      ::Log::Method m(__LAMBDA_FUNCSIG__("Timer"),STRING("timeout = " << timeout));
 
       if (WaitForSingleObjectEx(_cancelEvent.handle(),timeout,FALSE) == WAIT_TIMEOUT)
         f();
     })
 {
-  ::Log::Method(__SIGNATURE__,LOG_STRING("timeout = " << timeout));
+  ::Log::Method(__SIGNATURE__,STRING("timeout = " << timeout));
 
   setHandle(_thread.handle());
 }

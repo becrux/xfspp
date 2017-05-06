@@ -13,10 +13,13 @@
 #include <fstream>
 #include <sstream>
 #include <string>
+#include <locale>
+#include <codecvt>
 
 #include <windows.h>
 
-#define LOG_STRING(...) static_cast< std::ostringstream && >(std::ostringstream() << __VA_ARGS__).str()
+#include "util/string.hpp"
+
 #define __LAMBDA_FUNCSIG__(sig) "__LAMBDA__[" sig "]"
 
 #if defined(__GNUC__)
@@ -29,7 +32,9 @@ namespace Log
 {
   class Logger: public std::ostringstream
   {
+  #ifndef TEST_LOG
     static std::string getPathFromRegistry();
+  #endif
 
   public:
     explicit Logger();
@@ -51,4 +56,3 @@ namespace Log
 }
 
 #endif
-

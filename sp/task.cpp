@@ -11,26 +11,26 @@
 
 LambdaTask::LambdaTask(DWORD i, std::function< void (DWORD) > f) : _i(i), _f(f)
 {
-  ::Log::Method(__SIGNATURE__,LOG_STRING("i = " << i));
+  ::Log::Method(__SIGNATURE__,STRING("i = " << i));
 }
 
 LambdaTask::~LambdaTask()
 {
-  ::Log::Method(__SIGNATURE__,LOG_STRING("i = " << _i));
+  ::Log::Method(__SIGNATURE__,STRING("i = " << _i));
 }
 
 void LambdaTask::operator()(DWORD id)
 {
-  ::Log::Method m(__SIGNATURE__,LOG_STRING("id = " << id));
+  ::Log::Method m(__SIGNATURE__,STRING("id = " << id));
   _f(id);
 }
 
 void LambdaTask::timeoutF()
 {
-  ::Log::Method(__SIGNATURE__,LOG_STRING("i = " << _i));
+  ::Log::Method(__SIGNATURE__,STRING("i = " << _i));
 }
 
 void LambdaTask::cancelF()
 {
-  ::Log::Method(__SIGNATURE__,LOG_STRING("i = " << _i));
+  ::Log::Method(__SIGNATURE__,STRING("i = " << _i));
 }

@@ -11,6 +11,7 @@
 #define __LIBRARY_HPP__
 
 #include <string>
+#include <exception>
 
 #include "win32/handle.hpp"
 
@@ -25,7 +26,11 @@ namespace Windows
     template< typename R, typename... Args >
     R call(LPCSTR funcName, Args... args)
     {
-      return reinterpret_cast< R (__stdcall *)(Args...) >(GetProcAddress(handle(),funcName))(args...);
+      FARPROC WINAPI f = GetProcAddress(handle(),funcName);
+      if (f == NULL)
+        throw std::invalid_argument(std::string("cannot find ") + std::string(funcName));
+
+      return reinterpret_cast< R (__stdcall *)(Args...) >(f)(args...);
     }
   };
 }

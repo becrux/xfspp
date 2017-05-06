@@ -15,16 +15,22 @@
 
 using namespace Log;
 
+#ifndef TEST_LOG
 std::string Logger::getPathFromRegistry()
 {
   return Windows::Registry::Key(L"Software\\xfspp",HKEY_LOCAL_MACHINE).value< std::string >(L"logFileName","xfspp_mgr.log");
 }
+#endif
 
 std::ostream &Logger::streamInstance()
 {
+#ifdef TEST_LOG
+  return std::cout;
+#else
   static std::ofstream f(getPathFromRegistry(),std::ios::out);
 
   return f;
+#endif
 }
 
 Logger::Logger()

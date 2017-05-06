@@ -6,6 +6,7 @@ set(SOURCES
   ../win32/error.cpp
   ../win32/registry.cpp
   ../log/log.cpp
+  ../util/string.cpp
   dispatcher.cpp
   task.cpp
   main.cpp

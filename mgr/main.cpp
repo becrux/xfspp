@@ -190,9 +190,19 @@ extern "C" HRESULT WINAPI WFSCleanUp()
 {
   initializeContext();
 
-  CHECK_IF_STARTED
+  bool ok = false;
+  _ctx->shMem.access([&ok] (ShMemLayout *p)
+    {
+      auto it = std::find(std::begin(p->pidTable),std::end(p->pidTable),GetCurrentProcessId());
+      
+      if (it != std::end(p->pidTable))
+      {
+        *it = 0;
+        ok = true;
+      }
+    });
 
-  return WFS_SUCCESS;
+  return (ok)? WFS_SUCCESS : WFS_ERR_NOT_STARTED;
 }
 
 extern "C" HRESULT WINAPI WFSClose(HSERVICE hService)

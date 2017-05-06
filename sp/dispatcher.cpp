@@ -25,24 +25,24 @@ Dispatcher::TaskHelper::TaskHelper(DWORD id,
   _timer(_timeout,
     [this] ()
       {
-        ::Log::Method m(__LAMBDA_FUNCSIG__("TaskHelper::Timer"),LOG_STRING("id = " << _id));
+        ::Log::Method m(__LAMBDA_FUNCSIG__("TaskHelper::Timer"),STRING("id = " << _id));
 
         _completionEventCallback(CompletionEvent::Timeout,_id);
         _sem.unlock();
         _taskRef->timeoutF();
      })
 {
-  ::Log::Method(__SIGNATURE__,LOG_STRING("id = " << id << ", timeout = " << timeout));
+  ::Log::Method(__SIGNATURE__,STRING("id = " << id << ", timeout = " << timeout));
 }
 
 Dispatcher::TaskHelper::~TaskHelper()
 {
-  ::Log::Method(__SIGNATURE__,LOG_STRING("id = " << id()));
+  ::Log::Method(__SIGNATURE__,STRING("id = " << id()));
 }
 
 void Dispatcher::TaskHelper::cancel()
 {
-  ::Log::Method m(__SIGNATURE__,LOG_STRING("id = " << id()));
+  ::Log::Method m(__SIGNATURE__,STRING("id = " << id()));
 
   _completionEventCallback(CompletionEvent::Cancelled,id());
   _sem.unlock();
@@ -51,11 +51,11 @@ void Dispatcher::TaskHelper::cancel()
 
 void Dispatcher::TaskHelper::run()
 {
-  ::Log::Method m(__SIGNATURE__,LOG_STRING("id = " << id()));
+  ::Log::Method m(__SIGNATURE__,STRING("id = " << id()));
 
   _thread.reset(new Windows::Thread([this] ()
     {
-      ::Log::Method m(__LAMBDA_FUNCSIG__("TaskHelper::run"),LOG_STRING("id = " << id()));
+      ::Log::Method m(__LAMBDA_FUNCSIG__("TaskHelper::run"),STRING("id = " << id()));
 
       (*_taskRef)(id());
       _completionEventCallback(CompletionEvent::Completed,id());
@@ -127,7 +127,7 @@ Dispatcher::~Dispatcher()
 
 void Dispatcher::post(DWORD id, DWORD timeout, const std::shared_ptr< ITask > &task)
 {
-  ::Log::Method m(__SIGNATURE__,LOG_STRING("id = " << id << ", timeout = " << timeout));
+  ::Log::Method m(__SIGNATURE__,STRING("id = " << id << ", timeout = " << timeout));
 
   {
     MutexLocker locker(_mutex);
@@ -140,7 +140,7 @@ void Dispatcher::post(DWORD id, DWORD timeout, const std::shared_ptr< ITask > &t
         {
           std::shared_ptr< TaskHelper > sp1, sp2;
 
-          ::Log::Method m(__LAMBDA_FUNCSIG__("Taskhelper::completionChange"),LOG_STRING("id = " << id << ", event = " << event));
+          ::Log::Method m(__LAMBDA_FUNCSIG__("Taskhelper::completionChange"),STRING("id = " << id << ", event = " << event));
 
           MutexLocker inLocker(_mutex);
 
@@ -188,7 +188,7 @@ void Dispatcher::post(DWORD id, DWORD timeout, const std::shared_ptr< ITask > &t
 
 bool Dispatcher::cancel(DWORD id)
 {
-  ::Log::Method m(__SIGNATURE__,LOG_STRING("id = " << id));
+  ::Log::Method m(__SIGNATURE__,STRING("id = " << id));
 
   std::shared_ptr< TaskHelper > tH;
 

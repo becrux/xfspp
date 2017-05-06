@@ -9,6 +9,7 @@
 #include <tuple>
 
 #include "win32/registry.hpp"
+#include "log/log.hpp"
 
 using namespace Windows::Registry;
 
@@ -28,11 +29,15 @@ DWORD Key::disposition() const
 
 Windows::Error Key::remove(const std::wstring &sSubPath)
 {
+  ::Log::Method(__SIGNATURE__,WSTRING(L"sSubPath = " << sSubPath));
+
   return Error(RegDeleteKeyEx(handle(),sSubPath.c_str(),0,0));
 }
 
 Windows::Error Key::removeValue(const std::wstring &sValueName)
 {
+  ::Log::Method(__SIGNATURE__,WSTRING(L"sValueName = " << sValueName));
+
   return Error(RegDeleteValue(handle(), sValueName.c_str()));
 }
 
@@ -84,5 +89,7 @@ std::map< std::wstring,std::tuple< DWORD,std::vector< BYTE > > > Key::values() c
 
 Windows::Error Key::setValue(const std::wstring &sValueName, DWORD type, const std::vector< BYTE > &newValue)
 {
+  ::Log::Method(__SIGNATURE__,WSTRING(L"sValueName = " << sValueName));
+
   return Error(RegSetValueEx(handle(),sValueName.c_str(),0,type,newValue.data(),newValue.size()));
 }
