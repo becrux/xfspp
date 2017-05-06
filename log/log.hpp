@@ -13,8 +13,6 @@
 #include <fstream>
 #include <sstream>
 #include <string>
-#include <locale>
-#include <codecvt>
 
 #include <windows.h>
 
