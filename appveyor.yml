@@ -83,7 +83,7 @@ build_script:
   - if [%PLATFORM%]==[MSVC2012] cmake -G "%GENERATOR%" -T"v120_CTP_Nov2012" ..
   - if [%PLATFORM%]==[MSVC] cmake -G "%GENERATOR%" ..
   - if [%PLATFORM%]==[MinGW-w64] cmake -G "%GENERATOR%" ..
-  - if [%PLATFORM%]==[MinGW-w64] (cmake --build . --config "%CONFIG%") else (cmake --build . --config "%CONFIG%" /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll")
+  - if [%PLATFORM%]==[MinGW-w64] (cmake --build . --config "%CONFIG%") else (cmake --build . --config "%CONFIG%" -- /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll")
 
 test_script:
   - ps: >-
