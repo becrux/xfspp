@@ -3,15 +3,9 @@ cmake_minimum_required(VERSION 3.0.0)
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 project(xfspp)
+set(CMAKE_VERBOSE_MAKEFILE TRUE)
 
 execute_process(COMMAND ${CMAKE_COMMAND} "-E" "make_directory" "${CMAKE_SOURCE_DIR}/ext" WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
-
-if((NOT EXISTS ${CMAKE_SOURCE_DIR}/ext/googletest) AND (NOT (${CMAKE_GENERATOR_TOOLSET} MATCHES "^LLVM.*")))
-  message(STATUS "Downloading latest GoogleTest release ...")
-  file(DOWNLOAD https://github.com/google/googletest/archive/release-1.8.0.zip ${CMAKE_BINARY_DIR}/gtest.zip)
-  execute_process(COMMAND ${CMAKE_COMMAND} "-E" "tar" "xvf" "${CMAKE_BINARY_DIR}/gtest.zip" WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/ext)
-  execute_process(COMMAND ${CMAKE_COMMAND} "-E" "rename" "googletest-release-1.8.0" "googletest" WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/ext)
-endif()
 
 if(NOT EXISTS ${CMAKE_SOURCE_DIR}/ext/sqlite)
   message(STATUS "Downloading latest SQLite release ...")
@@ -20,22 +14,12 @@ if(NOT EXISTS ${CMAKE_SOURCE_DIR}/ext/sqlite)
   execute_process(COMMAND ${CMAKE_COMMAND} "-E" "rename" "sqlite-amalgamation-3180000" "sqlite" WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/ext)
 endif()
 
-if(MSVC)
-  set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+if(NOT EXISTS ${CMAKE_SOURCE_DIR}/ext/catch)
+  message(STATUS "Downloading latest Catch release ...")
+  file(DOWNLOAD https://github.com/philsquared/Catch/releases/download/v1.9.3/catch.hpp ${CMAKE_SOURCE_DIR}/ext/catch/catch.hpp)
 endif()
 
-if(NOT (${CMAKE_GENERATOR_TOOLSET} MATCHES "^LLVM.*"))
-  if(MSVC AND (${CMAKE_GENERATOR_TOOLSET} MATCHES "^v120_CTP_Nov2012.*"))
-    add_definitions(-DGTEST_HAS_TR1_TUPLE=0 -D_VARIADIC_MAX=10)
-  endif()
-
-  SET(BUILD_GMOCK OFF CACHE BOOL "Disable GMock" FORCE)
-  SET(BUILD_GTEST ON CACHE BOOL "Enable GTest" FORCE)
-  add_subdirectory(${CMAKE_SOURCE_DIR}/ext/googletest)
-
-  enable_testing()
-  include_directories(${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR})
-endif()
+enable_testing()
 
 add_definitions(
   -DNOMINMAX
@@ -43,15 +27,11 @@ add_definitions(
   -DUNICODE
   -DWINVER=0x0600
   -D_WIN32_WINNT=0x0600
-  -DGTEST_HAS_PTHREAD=0
-  -DGTEST_OS_WINDOWS=1
   -DWIN32
   -D_WINDOWS
 )
 
-set(CMAKE_VERBOSE_MAKEFILE TRUE)
-
-include_directories(${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/cen/320)
+include_directories(${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/cen/320 ${CMAKE_SOURCE_DIR}/ext)
 
 if(MSVC)
   set(CMAKE_CXX_FLAGS "/Wall /wd4710 /wd4820 /wd4668 /EHa /GR /fp:fast")

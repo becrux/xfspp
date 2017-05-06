@@ -8,8 +8,6 @@ add_executable(startupTests
   ../../common/version.cpp
 )
 
-target_link_libraries(startupTests gtest gtest_main)
-
 add_dependencies(startupTests xfsmgr)
 
 add_test(NAME startup_tests COMMAND startupTests ${CMAKE_BINARY_DIR}/out/msxfs.dll)
