@@ -12,9 +12,13 @@
 
 #include <functional>
 
+#include "util/constraints.hpp"
+
 class MethodScope
 {
   std::function< void () > _f;
+
+  NON_COPYABLE(MethodScope);
 
 public:
   explicit MethodScope() {}

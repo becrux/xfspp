@@ -6,8 +6,7 @@
  * of the MIT license.  See the LICENSE file for details.
  */
 
-#define CATCH_CONFIG_RUNNER
-#include "catch/catch.hpp"
+#include "tests/catch.hpp"
 
 #include "win32/library.hpp"
 
@@ -19,7 +18,7 @@ TEST_CASE("StartUp", "[XFS Manager]")
   }
 }
 
-extern "C" int wmain(int argc, wchar_t **argv, wchar_t **envp)
+extern "C" int wmain(int, wchar_t **, wchar_t **)
 {
   int catchArgc = 4;
   char *catchArgv[] = { "", "-s", "-d", "yes" };

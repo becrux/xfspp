@@ -8,8 +8,7 @@
 
 #include <memory>
 
-#define CATCH_CONFIG_RUNNER
-#include "catch/catch.hpp"
+#include "tests/catch.hpp"
 
 #include "win32/library.hpp"
 #include "common/version.hpp"
@@ -111,8 +110,10 @@ TEST_CASE("StartUp", "[XFS Manager]")
   }
 }
 
-extern "C" int wmain(int argc, wchar_t **argv, wchar_t **envp)
+extern "C" int wmain(int, wchar_t **argv, wchar_t **)
 {
+  SetEnvironmentVariable(L"XFSPP_LOG_ON_CONSOLE",L"1");
+
   Windows::Library l((std::wstring(argv[1])));
   lib = &l;
   

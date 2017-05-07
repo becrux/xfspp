@@ -1,15 +1,15 @@
-add_definitions(-DTEST_LOG)
-
 add_executable(tests_mgr_startup
   startup.cpp
   ../../win32/library.cpp
   ../../win32/synch.cpp
-  ../../win32/error.cpp
   ../../win32/registry.cpp
+  ../../win32/environment.cpp
   ../../log/log.cpp
   ../../common/version.cpp
   ../../util/string.cpp
 )
+
+target_link_libraries(tests_mgr_startup shlwapi)
 
 add_dependencies(tests_mgr_startup xfsmgr)
 

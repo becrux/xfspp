@@ -20,4 +20,6 @@ std::wstring convertTo(const std::string &s);
 
 #define WSTRING(...) convertTo(static_cast< std::wostringstream && >(std::wostringstream() << __VA_ARGS__).str())
 
+int icasecmp(const std::wstring &s1, const std::wstring &s2);
+
 #endif

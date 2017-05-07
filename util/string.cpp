@@ -9,33 +9,39 @@
 #include "util/string.hpp"
 
 #include <windows.h>
+#include <shlwapi.h>
 
 std::string convertTo(const std::wstring &s)
 {
-  size_t sz = s.length();
+  int sz = static_cast< int >(s.length());
   int nd = WideCharToMultiByte(CP_UTF8,0,s.c_str(),sz,NULL,0,NULL,NULL);
-  
-  char *buf = new char[nd];
+
+  char *buf = new char[static_cast< unsigned int >(nd)];
   WideCharToMultiByte(CP_UTF8,0,s.c_str(),sz,buf,nd,NULL,NULL);
   
   std::string res(buf);
-  
+
   delete [] buf;
-  
+
   return res;
 }
 
 std::wstring convertTo(const std::string &s)
 {
-  size_t sz = s.length();
+  int sz = static_cast< int >(s.length());
   int nd = MultiByteToWideChar(CP_UTF8,0,s.c_str(),sz,NULL,0);
-  
-  wchar_t *buf = new wchar_t[nd];
+
+  wchar_t *buf = new wchar_t[static_cast< unsigned int >(nd)];
   MultiByteToWideChar(CP_UTF8,0,s.c_str(),sz,buf,nd);
-  
+
   std::wstring res(buf);
-  
+
   delete [] buf;
-  
+
   return res;
+}
+
+int icasecmp(const std::wstring &s1, const std::wstring &s2)
+{
+  return StrCmpLogicalW(s1.c_str(),s2.c_str());
 }

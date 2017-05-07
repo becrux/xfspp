@@ -16,13 +16,13 @@
 #include <windows.h>
 
 #include "win32/thread.hpp"
+#include "util/constraints.hpp"
 
 namespace Windows
 {
   class MsgWnd
   {
-    MsgWnd(const MsgWnd &o);
-    MsgWnd &operator=(const MsgWnd &o);
+    NON_COPYABLE(MsgWnd);
 
     bool _closing;
     HINSTANCE _hInstance;

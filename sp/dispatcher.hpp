@@ -19,6 +19,7 @@
 #include "win32/synch.hpp"
 #include "win32/thread.hpp"
 #include "win32/timer.hpp"
+#include "util/constraints.hpp"
 
 class Dispatcher
 {
@@ -35,6 +36,8 @@ class Dispatcher
     std::function< void (CompletionEvent, DWORD) > _completionEventCallback;
     Windows::Timer _timer;
     std::unique_ptr< Windows::Thread > _thread;
+
+    NON_COPYABLE(TaskHelper);
 
   public:
     explicit TaskHelper(DWORD id,
@@ -59,6 +62,8 @@ class Dispatcher
   std::map< DWORD,std::shared_ptr< TaskHelper > > _notQueuedTasks;
   Windows::Synch::Semaphore _queueSem;
   Windows::Thread _queueThread;
+
+  NON_COPYABLE(Dispatcher);
 
 public:
   explicit Dispatcher();

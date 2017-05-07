@@ -14,13 +14,12 @@
 
 #include <functional>
 
+#include "util/constraints.hpp"
+
 class ITask
 {
-  ITask(const ITask &);
-  ITask &operator=(const ITask &);
-
-  ITask(ITask &&);
-  ITask &operator=(ITask &&);
+  NON_COPYABLE(ITask);
+  NON_MOVEABLE(ITask);
 
 public:
   ITask() { }
@@ -36,6 +35,8 @@ class LambdaTask : public ITask
 {
   DWORD _i;
   std::function< void (DWORD) > _f;
+
+  NON_COPYABLE(LambdaTask);
 
 public:
   explicit LambdaTask(DWORD i, std::function< void (DWORD) > f);

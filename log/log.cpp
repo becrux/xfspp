@@ -12,25 +12,37 @@
 
 #include "log/log.hpp"
 #include "win32/registry.hpp"
+#include "win32/environment.hpp"
 
 using namespace Log;
 
-#ifndef TEST_LOG
 std::string Logger::getPathFromRegistry()
 {
   return Windows::Registry::Key(L"Software\\xfspp",HKEY_LOCAL_MACHINE).value< std::string >(L"logFileName","xfspp_mgr.log");
 }
-#endif
 
-std::ostream &Logger::streamInstance()
+std::ostream &Logger::getFileStreamInstance()
 {
-#ifdef TEST_LOG
-  return std::cout;
-#else
   static std::ofstream f(getPathFromRegistry(),std::ios::out);
 
   return f;
-#endif
+}
+
+std::ostream &Logger::getConsoleStreamInstance()
+{
+  return std::cout;
+}
+
+bool Logger::isLogOnConsole()
+{
+  return Windows::Environment::Manager::instance().get(L"XFSPP_LOG_ON_CONSOLE") == L"1";
+}
+
+std::ostream &Logger::streamInstance()
+{
+  static bool onConsole = isLogOnConsole();
+
+  return (onConsole)? getConsoleStreamInstance() : getFileStreamInstance();
 }
 
 Logger::Logger()

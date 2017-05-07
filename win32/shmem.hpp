@@ -17,11 +17,14 @@
 #include "win32/uuid.hpp"
 #include "log/log.hpp"
 #include "util/memory.hpp"
+#include "util/constraints.hpp"
 
 namespace Windows
 {
   class RawSharedMemory : private Uuid, public Handle<>
   {
+    NON_COPYABLE(RawSharedMemory);
+
     Synch::Mutex _m;
     LPVOID _ptr;
 
@@ -35,6 +38,8 @@ namespace Windows
   template< typename T >
   class SharedMemory : private RawSharedMemory
   {
+    NON_COPYABLE(SharedMemory);
+
   public:
     explicit SharedMemory() :
       RawSharedMemory(sizeof(T))

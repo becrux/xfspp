@@ -15,6 +15,7 @@
 #include <windows.h>
 
 #include "win32/handle.hpp"
+#include "util/constraints.hpp"
 
 namespace Windows
 {
@@ -22,6 +23,8 @@ namespace Windows
   {
     class Lockable : public Handle<>
     {
+      NON_COPYABLE(Lockable);
+
     public:
       explicit Lockable(HANDLE h);
 
@@ -30,6 +33,8 @@ namespace Windows
 
     class Mutex : public Lockable
     {
+      NON_COPYABLE(Mutex);
+
     public:
       explicit Mutex(const std::wstring &sName = std::wstring());
 
@@ -38,6 +43,8 @@ namespace Windows
 
     class Semaphore : public Lockable
     {
+      NON_COPYABLE(Semaphore);
+
     public:
       explicit Semaphore(LONG start, LONG max);
 
@@ -46,6 +53,8 @@ namespace Windows
 
     class Event : public Handle<>
     {
+      NON_COPYABLE(Event);
+
     public:
       explicit Event();
 
@@ -71,8 +80,7 @@ namespace Windows
     {
       HANDLE _ref;
 
-      Locker(const Locker &);
-      Locker &operator=(const Locker &);
+      NON_COPYABLE(Locker);
 
     public:
       explicit Locker(HANDLE ref) : _ref(ref) { WaitForSingleObjectEx(_ref,INFINITE,FALSE); }

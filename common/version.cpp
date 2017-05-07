@@ -14,8 +14,8 @@
 using namespace XFS;
 
 Version::Version(WORD wVersion) :
-  _major(wVersion & 0xff),
-  _minor((wVersion >> 8) & 0xff)
+  _major(static_cast< WORD >(wVersion & 0xff)),
+  _minor(static_cast< WORD >((wVersion >> 8) & 0xff))
 {
 
 }
@@ -29,7 +29,7 @@ Version::Version(BYTE bMajor, BYTE bMinor) :
 
 WORD Version::value() const
 {
-  return (minor() << 8) | major();
+  return static_cast< WORD >((minor() << 8) | major());
 }
 
 WORD Version::major() const
@@ -95,7 +95,7 @@ Version VersionRange::end() const
 
 DWORD VersionRange::value() const
 {
-  return (start().value() << 16) | end().value();
+  return static_cast< DWORD >((start().value() << 16) | end().value());
 }
 
 bool VersionRange::contains(const Version &v) const

@@ -4,9 +4,9 @@ set(SOURCES
   ../win32/synch.cpp
   ../win32/msgwnd.cpp
   ../win32/uuid.cpp
-  ../win32/error.cpp
   ../win32/library.cpp
   ../win32/shmem.cpp
+  ../win32/environment.cpp
   ../log/log.cpp
   ../common/version.cpp
   ../util/string.cpp

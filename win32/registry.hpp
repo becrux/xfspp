@@ -17,6 +17,7 @@
 
 #include "win32/handle.hpp"
 #include "util/memory.hpp"
+#include "util/constraints.hpp"
 
 namespace Windows
 {
@@ -30,6 +31,8 @@ namespace Windows
     class Key : public Handle< HKEY,LSTATUS >
     {
       DWORD _disposition;
+
+      NON_COPYABLE(Key);
 
     public:
       explicit Key(const std::wstring &sPath, HKEY rootKey = HKEY_CURRENT_USER);
@@ -63,10 +66,10 @@ namespace Windows
         return value(sValueName,std::wstring(),std::forward< T >(defaultValue));
       }
 
-      Error remove(const std::wstring &sSubPath);
-      Error removeValue(const std::wstring &sValueName);
+      Error< LRESULT > remove(const std::wstring &sSubPath);
+      Error< LRESULT > removeValue(const std::wstring &sValueName);
 
-      Error setValue(const std::wstring &sValueName,DWORD type, const std::vector< BYTE > &newValue);
+      Error< LRESULT > setValue(const std::wstring &sValueName,DWORD type, const std::vector< BYTE > &newValue);
     };
   }
 }

@@ -13,6 +13,7 @@
 #include <functional>
 
 #include "win32/handle.hpp"
+#include "util/constraints.hpp"
 
 namespace Windows
 {
@@ -22,6 +23,8 @@ namespace Windows
     std::function< void () > _f;
 
     static DWORD WINAPI threadProc(LPVOID lpParameter);
+
+    NON_COPYABLE(Thread);
 
   public:
     explicit Thread(std::function< void () > f);

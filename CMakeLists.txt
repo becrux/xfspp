@@ -31,10 +31,10 @@ add_definitions(
   -D_WINDOWS
 )
 
-include_directories(${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/cen/320 ${CMAKE_SOURCE_DIR}/ext)
+include_directories(${CMAKE_SOURCE_DIR} SYSTEM ${CMAKE_SOURCE_DIR}/cen/320 ${CMAKE_SOURCE_DIR}/ext)
 
 if(MSVC)
-  set(CMAKE_CXX_FLAGS "/Wall /wd4710 /wd4820 /wd4668 /EHa /GR /fp:fast")
+  set(CMAKE_CXX_FLAGS "/Wall /wd4710 /wd4820 /wd4668 /wd4514 /wd4355 /EHa /GR /fp:fast")
   
   set(CMAKE_CXX_FLAGS_DEBUG "/Ob0 /D_DEBUG /MDd /Zi /Od /RTC1 ${CMAKE_CXX_FLAGS}")
   

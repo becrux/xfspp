@@ -13,6 +13,7 @@
 #include <windows.h>
 
 #include "win32/error.hpp"
+#include "util/constraints.hpp"
 
 namespace Windows
 {
@@ -21,16 +22,15 @@ namespace Windows
   template< typename T = HANDLE, typename R = BOOL >
   class Handle
   {
-    Handle(const Handle &o);
-    Handle &operator=(const Handle &o);
+    NON_COPYABLE(Handle);
 
     T _h;
-    Error _lastError;
+    Error<> _lastError;
     R ((__stdcall *_closeF))(T);
 
     void setLastError()
     {
-      _lastError = ((_h == NULL) || (_h == INVALID_HANDLE_VALUE))? Error() : Error(ERROR_SUCCESS);
+      _lastError = ((_h == NULL) || (_h == INVALID_HANDLE_VALUE))? Error<>() : Error<>(ERROR_SUCCESS);
     }
 
   protected:
@@ -71,7 +71,7 @@ namespace Windows
       return _h;
     }
 
-    Error lastError() const
+    Error<> lastError() const
     {
       return _lastError;
     }

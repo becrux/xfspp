@@ -11,7 +11,7 @@
 
 using namespace Windows;
 
-Timer::Timer(int timeout, std::function< void () > f) :
+Timer::Timer(DWORD timeout, std::function< void () > f) :
   Handle<>(NULL,nullCloseHandle),
   _thread([this, timeout, f] ()
     {

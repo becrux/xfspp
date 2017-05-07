@@ -24,6 +24,7 @@
 #include "common/version.hpp"
 #include "util/memory.hpp"
 #include "util/methodscope.hpp"
+#include "util/constraints.hpp"
 #include "log/log.hpp"
 
 #include <shlwapi.h>
@@ -59,8 +60,14 @@ namespace
   HINSTANCE dllInstance = NULL;
   HANDLE mutexHandle = NULL;
 
-  struct Context
+  class Context
   {
+    NON_COPYABLE(Context);
+    NON_MOVEABLE(Context);
+
+  public:
+    explicit Context() { }
+
     Windows::SharedMemory< ShMemLayout > shMem;
     std::map< void *,std::list< void * > > allocMap;
     std::map< WORD,std::tuple< HWND,LPVOID > > timers;
@@ -129,6 +136,8 @@ namespace
 
 class SynchMsgWnd : public Windows::MsgWnd
 {
+  NON_COPYABLE(SynchMsgWnd);
+
 public:
   explicit SynchMsgWnd(HINSTANCE hInstance, Windows::Synch::Semaphore &sem, HRESULT &hRes, DWORD msgId, LPWFSRESULT *lppResult = NULL) :
     Windows::MsgWnd(hInstance,[&sem, &hRes, msgId, lppResult] (UINT uMsg, WPARAM, LPARAM lParam)

@@ -14,11 +14,14 @@
 #include <stdexcept>
 
 #include "win32/handle.hpp"
+#include "util/constraints.hpp"
 
 namespace Windows
 {
   class Library : public Handle< HMODULE >
   {
+    NON_COPYABLE(Library);
+
   public:
     explicit Library(const std::wstring &sLibPath);
     ~Library();
@@ -26,7 +29,7 @@ namespace Windows
     template< typename R, typename... Args >
     R call(LPCSTR funcName, Args... args)
     {
-      FARPROC WINAPI f = GetProcAddress(handle(),funcName);
+      void *f = reinterpret_cast< void * >(GetProcAddress(handle(),funcName));
       if (f == NULL)
         throw std::invalid_argument(std::string("cannot find ") + std::string(funcName));
 

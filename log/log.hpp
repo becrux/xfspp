@@ -17,6 +17,7 @@
 #include <windows.h>
 
 #include "util/string.hpp"
+#include "util/constraints.hpp"
 
 #define __LAMBDA_FUNCSIG__(sig) "__LAMBDA__[" sig "]"
 
@@ -30,9 +31,14 @@ namespace Log
 {
   class Logger: public std::ostringstream
   {
-  #ifndef TEST_LOG
     static std::string getPathFromRegistry();
-  #endif
+
+    static std::ostream &getFileStreamInstance();
+    static std::ostream &getConsoleStreamInstance();
+
+    static bool isLogOnConsole();
+
+    NON_COPYABLE(Logger);
 
   public:
     explicit Logger();

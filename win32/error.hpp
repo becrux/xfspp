@@ -14,17 +14,23 @@
 
 namespace Windows
 {
+  template< typename T = DWORD >
   class Error
   {
-    DWORD _value;
-    DWORD _successValue;
+    T _value;
+    T _successValue;
 
   public:
-    explicit Error(DWORD value = GetLastError(), DWORD successValue = 0);
+    explicit Error(T value = GetLastError(),const T &successValue = T()) :
+      _value(value),
+      _successValue(successValue)
+    {
 
-    DWORD value() const;
+    }
 
-    operator bool() const;
+    T value() const { return _value; }
+
+    operator bool() const { _value == _successValue; }
   };
 }
 

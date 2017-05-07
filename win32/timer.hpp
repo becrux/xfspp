@@ -14,6 +14,7 @@
 
 #include "win32/synch.hpp"
 #include "win32/thread.hpp"
+#include "util/constraints.hpp"
 
 namespace Windows
 {
@@ -23,13 +24,11 @@ namespace Windows
     Synch::Event _cancelEvent;
     Thread _thread;
 
-    Timer(const Timer &o);
-    Timer &operator=(const Timer &o);
-    Timer(Timer &&o);
-    Timer &operator=(Timer &&o);
+    NON_COPYABLE(Timer);
+    NON_MOVEABLE(Timer);
 
   public:
-    explicit Timer(int timeout, std::function< void () > f);
+    explicit Timer(DWORD timeout, std::function< void () > f);
     ~Timer();
 
     void cancel();
