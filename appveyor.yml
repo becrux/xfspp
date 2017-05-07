@@ -88,3 +88,11 @@ build_script:
 test_script:
   - if [%PLATFORM%]==[MinGW-w64] (cmake --build . --config "%CONFIG%" --target tests) else (cmake --build . --config "%CONFIG%" --target tests -- /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll")
   - ctest -VV --build-config "%CONFIG%" --no-compress-output --output-on-failure -T Test
+  - ps: |
+      $files = Get-ChildItem ".\tests_xml"
+      
+      for ($i=0; $i -lt $files.Count; $i++)
+      {
+          $wc = New-Object 'System.Net.WebClient'
+          $wc.UploadFile("https://ci.appveyor.com/api/testresults/xunit/$($env:APPVEYOR_JOB_ID)", (Resolve-Path $files[$i].FullName))
+      }

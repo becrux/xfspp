@@ -110,15 +110,18 @@ TEST_CASE("StartUp", "[XFS Manager]")
   }
 }
 
-extern "C" int wmain(int, wchar_t **argv, wchar_t **)
+extern "C" int wmain(int argc, wchar_t **argv, wchar_t **)
 {
-  SetEnvironmentVariable(L"XFSPP_LOG_ON_CONSOLE",L"1");
+  std::shared_ptr< Windows::Library > l;
 
-  Windows::Library l((std::wstring(argv[1])));
-  lib = &l;
-  
-  int catchArgc = 4;
-  char *catchArgv[] = { "", "-s", "-d", "yes" };
+  return run(
+    argc,
+	argv,
+	[&l] (const std::wstring &libArg)
+	  {
+		std::wcout << "XFS Manager Library = " << libArg << std::endl;
 
-  return Catch::Session().run(catchArgc,catchArgv);
+		l = std::make_shared< Windows::Library >(std::wstring(libArg));
+        lib = l.get();
+	  });
 }

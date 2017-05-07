@@ -16,5 +16,5 @@ ADD_XFSPP_TEST(tests_mgr_startup
     xfsmgr
   
   RUN_WITH_PARAMS
-    ${CMAKE_BINARY_DIR}/out/msxfs.dll
+    "--lib" "${CMAKE_BINARY_DIR}/out/msxfs.dll"
 )

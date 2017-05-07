@@ -18,10 +18,7 @@ TEST_CASE("StartUp", "[XFS Manager]")
   }
 }
 
-extern "C" int wmain(int, wchar_t **, wchar_t **)
+extern "C" int wmain(int argc, wchar_t **argv, wchar_t **)
 {
-  int catchArgc = 4;
-  char *catchArgv[] = { "", "-s", "-d", "yes" };
-
-  return Catch::Session().run(catchArgc,catchArgv);
+  return run(argc,argv);
 }

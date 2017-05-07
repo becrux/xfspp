@@ -80,7 +80,7 @@ namespace
       Windows::Synch::Locker< HANDLE > lock(mutexHandle);
 
   	  if (!_ctx)
-    		_ctx = new Context;
+    	_ctx = new Context;
     }
   }
 

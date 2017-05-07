@@ -34,7 +34,7 @@ add_definitions(
 include_directories(${CMAKE_SOURCE_DIR} SYSTEM ${CMAKE_SOURCE_DIR}/cen/320 ${CMAKE_SOURCE_DIR}/ext)
 
 if(MSVC)
-  set(CMAKE_CXX_FLAGS "/Wall /wd4710 /wd4820 /wd4668 /wd4514 /wd4355 /wd4350 /EHa /GR /fp:fast")
+  set(CMAKE_CXX_FLAGS "/Wall /wd4710 /wd4820 /wd4668 /wd4514 /wd4355 /wd4350 /wd4640 /EHa /GR /fp:fast")
   
   set(CMAKE_CXX_FLAGS_DEBUG "/Ob0 /D_DEBUG /MDd /Zi /Od /RTC1 ${CMAKE_CXX_FLAGS}")
   
@@ -87,7 +87,8 @@ execute_process(COMMAND "${CMAKE_COMMAND}" "-E" "environment")
 set(OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/out)
 file(MAKE_DIRECTORY ${OUTPUT_DIRECTORY})
 
-add_custom_target(tests)
+add_custom_target(tests
+  COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/tests_xml)
 
 function(ADD_XFSPP_TEST targetName)
   set(sources SOURCES)
@@ -110,7 +111,7 @@ function(ADD_XFSPP_TEST targetName)
 
   add_dependencies(tests ${targetName})
   
-  add_test(NAME ${targetName} COMMAND ${targetName} ${PARSED_ARGS_RUN_WITH_PARAMS})
+  add_test(NAME ${targetName} COMMAND ${targetName} ${PARSED_ARGS_RUN_WITH_PARAMS} "-s" "-d" "yes" "-r" "junit" "-o" "${CMAKE_BINARY_DIR}/tests_xml/${targetName}.xml")
 endfunction()
 
 add_subdirectory(mgr)
