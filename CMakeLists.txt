@@ -34,7 +34,7 @@ add_definitions(
 include_directories(${CMAKE_SOURCE_DIR} SYSTEM ${CMAKE_SOURCE_DIR}/cen/320 ${CMAKE_SOURCE_DIR}/ext)
 
 if(MSVC)
-  set(CMAKE_CXX_FLAGS "/Wall /wd4710 /wd4820 /wd4668 /wd4514 /wd4355 /EHa /GR /fp:fast")
+  set(CMAKE_CXX_FLAGS "/Wall /wd4710 /wd4820 /wd4668 /wd4514 /wd4355 /wd4350 /EHa /GR /fp:fast")
   
   set(CMAKE_CXX_FLAGS_DEBUG "/Ob0 /D_DEBUG /MDd /Zi /Od /RTC1 ${CMAKE_CXX_FLAGS}")
   
@@ -86,6 +86,32 @@ execute_process(COMMAND "${CMAKE_COMMAND}" "-E" "environment")
 
 set(OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/out)
 file(MAKE_DIRECTORY ${OUTPUT_DIRECTORY})
+
+add_custom_target(tests)
+
+function(ADD_XFSPP_TEST targetName)
+  set(sources SOURCES)
+  set(args ARGS)
+  set(libs LIBS)
+  set(deps DEPENDS)
+  cmake_parse_arguments(PARSED_ARGS "" "" "SOURCES;DEPS;LIBS;RUN_WITH_PARAMS" ${ARGN})
+  
+  add_executable(${targetName}
+    EXCLUDE_FROM_ALL
+	${PARSED_ARGS_SOURCES})
+
+  if(PARSED_ARGS_LIBS)
+    target_link_libraries(${targetName} ${PARSED_ARGS_LIBS})
+  endif()
+  
+  if(PARSED_ARGS_DEPS)
+    add_dependencies(${targetName} ${PARSED_ARGS_DEPS})
+  endif()
+
+  add_dependencies(tests ${targetName})
+  
+  add_test(NAME ${targetName} COMMAND ${targetName} ${PARSED_ARGS_RUN_WITH_PARAMS})
+endfunction()
 
 add_subdirectory(mgr)
 add_subdirectory(sp)

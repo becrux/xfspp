@@ -86,4 +86,5 @@ build_script:
   - if [%PLATFORM%]==[MinGW-w64] (cmake --build . --config "%CONFIG%") else (cmake --build . --config "%CONFIG%" -- /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll")
 
 test_script:
+  - if [%PLATFORM%]==[MinGW-w64] (cmake --build . --config "%CONFIG%" --target tests) else (cmake --build . --config "%CONFIG%" --target tests -- /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll")
   - ctest -VV --build-config "%CONFIG%" --no-compress-output --output-on-failure -T Test
