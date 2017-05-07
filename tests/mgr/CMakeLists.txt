@@ -1,4 +1,5 @@
 add_executable(tests_mgr_startup
+  EXCLUDE_FROM_ALL
   startup.cpp
   ../../win32/library.cpp
   ../../win32/synch.cpp
