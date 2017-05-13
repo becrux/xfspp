@@ -30,7 +30,10 @@ namespace Windows
 
     T value() const { return _value; }
 
-    operator bool() const { _value == _successValue; }
+    explicit operator bool() const { return _value == _successValue; }
+
+    bool operator==(const T &other) const { return _value == other; }
+    bool operator!=(const T &other) const { return _value != other; }
   };
 }
 

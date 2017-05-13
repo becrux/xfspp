@@ -1,12 +1,24 @@
 ADD_XFSPP_TEST(tests_win32_handle
   SOURCES
     handle.cpp
+    ../../win32/filesystem.cpp
+
+  LIBS
+    shlwapi
 )
 
 ADD_XFSPP_TEST(tests_win32_synch
   SOURCES
     synch.cpp
     ../../win32/synch.cpp
+    ../../win32/thread.cpp
+    ../../win32/environment.cpp
+    ../../win32/registry.cpp
+    ../../log/log.cpp
+    ../../util/string.cpp
+
+  LIBS
+    shlwapi
 )
 
 ADD_XFSPP_TEST(tests_win32_thread

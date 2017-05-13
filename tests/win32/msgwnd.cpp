@@ -10,11 +10,23 @@
 
 #include "win32/msgwnd.hpp"
 
-TEST_CASE("StartUp", "[XFS Manager]")
+TEST_CASE("Message window", "[Win32]")
 {
-  SECTION("loading library")
+  SECTION("send a message")
   {
-    REQUIRE(true);
+    Windows::MsgWnd w(
+      GetModuleHandle(NULL),
+      [] (UINT uMsg, WPARAM wP, LPARAM lP)
+        {
+          REQUIRE(uMsg == (WM_USER + 1));
+          REQUIRE(wP == static_cast< WPARAM >(0x01234567));
+          REQUIRE(lP == static_cast< LPARAM >(0x89ABCDEF));
+        });
+
+    w.start();
+    REQUIRE(w.handle() != NULL);
+
+    SendMessage(w.handle(),WM_USER + 1,static_cast< WPARAM >(0x01234567),static_cast< LPARAM >(0x89ABCDEF));
   }
 }
 

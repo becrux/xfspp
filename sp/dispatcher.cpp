@@ -28,7 +28,7 @@ Dispatcher::TaskHelper::TaskHelper(DWORD id,
         ::Log::Method m(__LAMBDA_FUNCSIG__("TaskHelper::Timer"),STRING("id = " << _id));
 
         _completionEventCallback(CompletionEvent::Timeout,_id);
-        _sem.unlock();
+        _sem.release();
         _taskRef->timeoutF();
      })
 {
@@ -45,7 +45,7 @@ void Dispatcher::TaskHelper::cancel()
   ::Log::Method m(__SIGNATURE__,STRING("id = " << id()));
 
   _completionEventCallback(CompletionEvent::Cancelled,id());
-  _sem.unlock();
+  _sem.release();
   _taskRef->cancelF();
 }
 
@@ -59,10 +59,10 @@ void Dispatcher::TaskHelper::run()
 
       (*_taskRef)(id());
       _completionEventCallback(CompletionEvent::Completed,id());
-      _sem.unlock();
+      _sem.release();
     }));
 
-  _sem.lock();
+  _sem.acquire();
 }
 
 Dispatcher::Dispatcher() :
@@ -77,7 +77,7 @@ Dispatcher::Dispatcher() :
       {
         std::shared_ptr< TaskHelper > tH;
 
-        _queueSem.lock();
+        _queueSem.acquire();
 
         {
           MutexLocker locker(_mutex);
@@ -119,10 +119,10 @@ Dispatcher::~Dispatcher()
     MutexLocker locker(_mutex);
 
     _closing = true;
-    _queueSem.unlock();
+    _queueSem.release();
   }
 
-  _closingSem.lock();
+  _closingSem.acquire();
 }
 
 void Dispatcher::post(DWORD id, DWORD timeout, const std::shared_ptr< ITask > &task)
@@ -176,14 +176,14 @@ void Dispatcher::post(DWORD id, DWORD timeout, const std::shared_ptr< ITask > &t
           }
 
           if (_closing && _notQueuedTasks.empty() && _queuedTasks.empty())
-            _closingSem.unlock();
+            _closingSem.release();
         });
 
     _queueList.push_front(id);
     _queuedTasks.emplace(id,th);
   }
 
-  _queueSem.unlock();
+  _queueSem.release();
 }
 
 bool Dispatcher::cancel(DWORD id)

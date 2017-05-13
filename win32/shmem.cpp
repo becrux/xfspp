@@ -7,13 +7,42 @@
  */
 
 #include "win32/shmem.hpp"
+#include "util/string.hpp"
 
 using namespace Windows;
 
-RawSharedMemory::RawSharedMemory(DWORD dwSize) :
-  Handle<>(CreateFileMapping(INVALID_HANDLE_VALUE,NULL,PAGE_READWRITE,0,dwSize,value(L"Global\\XFSPP_XFS_MANAGER_SHMEM_").c_str())),
-  _m(value(L"Global\\XFSPP_XFS_MANAGER_SHMEM_MUTEX_")),
+BaseRawSharedMemory::BaseRawSharedMemory(DWORD dwSize, const std::wstring &sName) :
+  Handle<>(CreateFileMapping(
+    INVALID_HANDLE_VALUE,
+    NULL,
+    PAGE_READWRITE,
+    0,
+    dwSize,
+    (std::wstring(L"Local\\") + sName + std::wstring(L"_SHMEM")).c_str())),
+  _m((sName + std::wstring(L"_MUTEX")).c_str()),
   _ptr(MapViewOfFileEx(handle(),FILE_MAP_ALL_ACCESS,0,0,0,NULL))
+{
+  ::Log::Method m(__SIGNATURE__,WSTRING(L"sName = " << sName));
+}
+
+BaseRawSharedMemory::~BaseRawSharedMemory()
+{
+  ::Log::Method m(__SIGNATURE__);
+
+  UnmapViewOfFile(_ptr);
+}
+
+void BaseRawSharedMemory::access(std::function< void(LPVOID) > f)
+{
+  ::Log::Method m(__SIGNATURE__);
+
+  Synch::Locker< Synch::Mutex > lock(_m);
+
+  f(_ptr);
+}
+
+RawSharedMemory::RawSharedMemory(DWORD dwSize,const std::wstring &sName) :
+  BaseRawSharedMemory(dwSize,sName)
 {
   ::Log::Method m(__SIGNATURE__);
 }
@@ -21,15 +50,11 @@ RawSharedMemory::RawSharedMemory(DWORD dwSize) :
 RawSharedMemory::~RawSharedMemory()
 {
   ::Log::Method m(__SIGNATURE__);
-
-  UnmapViewOfFile(_ptr);
 }
 
 void RawSharedMemory::access(std::function< void(LPVOID) > f)
 {
   ::Log::Method m(__SIGNATURE__);
 
-  Synch::Locker< Synch::Mutex > lock(_m);
-
-  f(_ptr);
+  BaseRawSharedMemory::access(f);
 }

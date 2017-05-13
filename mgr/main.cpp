@@ -66,11 +66,15 @@ namespace
     NON_MOVEABLE(Context);
 
   public:
-    explicit Context() { }
-
     Windows::SharedMemory< ShMemLayout > shMem;
     std::map< void *,std::list< void * > > allocMap;
     std::map< WORD,std::tuple< HWND,LPVOID > > timers;
+
+    explicit Context() :
+      shMem(L"XFSPP_MANAGER")
+    {
+
+    }
   } *_ctx = nullptr;
 
   void initializeContext()
@@ -149,7 +153,7 @@ public:
           if (lppResult != NULL)
             *lppResult = reinterpret_cast< LPWFSRESULT >(lParam);
 
-          sem.unlock();
+          sem.release();
         }
       })
   {
@@ -230,7 +234,7 @@ extern "C" HRESULT WINAPI WFSClose(HSERVICE hService)
   if ((hRes = WFSAsyncClose(hService,wnd.handle(),&reqId)) != WFS_SUCCESS)
     return hRes;
 
-  sem.lock();
+  sem.acquire();
 
   return hRes;
 }
@@ -291,7 +295,7 @@ extern "C" HRESULT WINAPI WFSDeregister(HSERVICE hService, DWORD dwEventClass, H
   if ((hRes = WFSAsyncDeregister(hService,dwEventClass,hWndReg,wnd.handle(),&reqId)) != WFS_SUCCESS)
     return hRes;
 
-  sem.lock();
+  sem.acquire();
 
   return hRes;
 }
@@ -355,7 +359,7 @@ extern "C" HRESULT WINAPI WFSExecute(HSERVICE hService, DWORD dwCommand, LPVOID 
   if ((hRes = WFSAsyncExecute(hService,dwCommand,lpCmdData,dwTimeOut,wnd.handle(),&reqId)) != WFS_SUCCESS)
     return hRes;
 
-  sem.lock();
+  sem.acquire();
 
   return hRes;
 }
@@ -394,7 +398,7 @@ extern "C" HRESULT WINAPI WFSGetInfo(HSERVICE hService, DWORD dwCategory, LPVOID
   if ((hRes = WFSAsyncGetInfo(hService,dwCategory,lpQueryDetails,dwTimeOut,wnd.handle(),&reqId)) != WFS_SUCCESS)
     return hRes;
 
-  sem.lock();
+  sem.acquire();
 
   return hRes;
 }
@@ -436,7 +440,7 @@ extern "C" HRESULT WINAPI WFSLock(HSERVICE hService, DWORD dwTimeOut, LPWFSRESUL
   if ((hRes = WFSAsyncLock(hService,dwTimeOut,wnd.handle(),&reqId)) != WFS_SUCCESS)
     return hRes;
 
-  sem.lock();
+  sem.acquire();
 
   return hRes;
 }
@@ -472,7 +476,7 @@ extern "C" HRESULT WINAPI WFSOpen(LPSTR lpszLogicalName, HAPP hApp, LPSTR lpszAp
   if ((hRes = WFSAsyncOpen(lpszLogicalName,hApp,lpszAppID,dwTraceLevel,dwTimeOut,lphService,wnd.handle(),dwSrvcVersionsRequired,lpSrvcVersion,lpSPIVersion,&reqId)) != WFS_SUCCESS)
     return hRes;
 
-  sem.lock();
+  sem.acquire();
 
   return hRes;
 }
@@ -595,7 +599,7 @@ extern "C" HRESULT WINAPI WFSRegister(HSERVICE hService, DWORD dwEventClass, HWN
   if ((hRes = WFSAsyncRegister(hService,dwEventClass,hWndReg,wnd.handle(),&reqId)) != WFS_SUCCESS)
     return hRes;
 
-  sem.lock();
+  sem.acquire();
 
   return hRes;
 }
@@ -698,7 +702,7 @@ extern "C" HRESULT WINAPI WFSUnlock(HSERVICE hService)
   if ((hRes = WFSAsyncUnlock(hService,wnd.handle(),&reqId)) != WFS_SUCCESS)
     return hRes;
 
-  sem.lock();
+  sem.acquire();
 
   return hRes;
 }
@@ -1155,7 +1159,7 @@ extern "C" BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID)
   {
     case DLL_PROCESS_ATTACH:
       dllInstance = hinstDLL;
-      mutexHandle = CreateMutex(NULL,FALSE,L"Global\\XFSPP_XFS_MANAGER_MUTEX");
+      mutexHandle = CreateMutex(NULL,FALSE,L"Local\\XFSPP_XFS_MANAGER_MUTEX");
       break;
 
     case DLL_PROCESS_DETACH:

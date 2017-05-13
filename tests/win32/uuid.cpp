@@ -10,11 +10,13 @@
 
 #include "win32/uuid.hpp"
 
-TEST_CASE("StartUp", "[XFS Manager]")
+TEST_CASE("UUID", "[Win32]")
 {
-  SECTION("loading library")
+  SECTION("generate")
   {
-    REQUIRE(true);
+    Windows::Uuid u;
+
+    REQUIRE(!u.value().empty());
   }
 }
 

@@ -22,7 +22,7 @@ void Lockable::lock()
 }
 
 Mutex::Mutex(const std::wstring &sName) :
-  Lockable(CreateMutex(NULL,FALSE,(sName.empty())? NULL : (std::wstring(L"Global\\") + sName).c_str()))
+  Lockable(CreateMutex(NULL,FALSE,(sName.empty())? NULL : (std::wstring(L"Local\\") + sName).c_str()))
 {
 
 }
@@ -32,19 +32,24 @@ void Mutex::unlock()
   ReleaseMutex(handle());
 }
 
-Semaphore::Semaphore(LONG start, LONG max) :
-  Lockable(CreateSemaphore(NULL,start,max,NULL))
+Semaphore::Semaphore(LONG start, LONG max, const std::wstring &sName) :
+  Handle<>(CreateSemaphore(NULL,start,max,(sName.empty())? NULL : (std::wstring(L"Local\\") + sName).c_str()))
 {
 
 }
 
-void Semaphore::unlock()
+void Semaphore::acquire()
+{
+  WaitForSingleObjectEx(handle(),INFINITE,FALSE);
+}
+
+void Semaphore::release()
 {
   ReleaseSemaphore(handle(),1,NULL);
 }
 
-Event::Event() :
-  Handle(CreateEvent(NULL,TRUE,FALSE,NULL))
+Event::Event(const std::wstring &sName) :
+  Handle(CreateEvent(NULL,TRUE,FALSE,(sName.empty())? NULL : (std::wstring(L"Local\\") + sName).c_str()))
 {
 
 }

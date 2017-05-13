@@ -10,11 +10,20 @@
 
 #include "win32/library.hpp"
 
-TEST_CASE("StartUp", "[XFS Manager]")
+TEST_CASE("Libraries", "[Win32]")
 {
-  SECTION("loading library")
+  SECTION("not-existing library")
   {
-    REQUIRE(true);
+    REQUIRE(!Windows::Library(L"not_existing_library.dll"));
+  }
+
+  SECTION("existing library")
+  {
+    Windows::Library l(L"kernel32.dll");
+
+    REQUIRE(l);
+    REQUIRE_THROWS_AS(l.call< DWORD >("No_GetTickCount64"),std::invalid_argument);
+    REQUIRE_NOTHROW(l.call< DWORD >("GetTickCount64"));
   }
 }
 

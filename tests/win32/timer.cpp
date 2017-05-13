@@ -10,11 +10,40 @@
 
 #include "win32/timer.hpp"
 
-TEST_CASE("StartUp", "[XFS Manager]")
+TEST_CASE("Timers", "[Win32]")
 {
-  SECTION("loading library")
+  SECTION("triggered")
   {
-    REQUIRE(true);
+    bool flag = false;
+
+    Windows::Timer t(2000,
+      [&flag] ()
+        {
+          flag = true;
+        });
+
+    REQUIRE(t);
+
+    SleepEx(3000,FALSE);
+    REQUIRE(flag);
+  }
+
+  SECTION("cancelled")
+  {
+    bool flag = false;
+
+    Windows::Timer t(2000,
+      [&flag] ()
+    {
+      flag = true;
+    });
+
+    REQUIRE(t);
+
+    SleepEx(500,FALSE);
+    t.cancel();
+    SleepEx(2000,FALSE);
+    REQUIRE(!flag);
   }
 }
 

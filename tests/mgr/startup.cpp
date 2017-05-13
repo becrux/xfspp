@@ -116,12 +116,12 @@ extern "C" int wmain(int argc, wchar_t **argv, wchar_t **)
 
   return run(
     argc,
-	argv,
-	[&l] (const std::wstring &libArg)
-	  {
-		std::wcout << "XFS Manager Library = " << libArg << std::endl;
+    argv,
+    [&l] (const std::wstring &libArg)
+      {
+        std::wcout << "XFS Manager Library = " << libArg << std::endl;
 
-		l = std::make_shared< Windows::Library >(std::wstring(libArg));
+        l = std::make_shared< Windows::Library >(std::wstring(libArg));
         lib = l.get();
-	  });
+      });
 }

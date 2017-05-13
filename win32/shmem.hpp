@@ -21,28 +21,39 @@
 
 namespace Windows
 {
-  class RawSharedMemory : private Uuid, public Handle<>
+  class BaseRawSharedMemory : public Handle<>
   {
-    NON_COPYABLE(RawSharedMemory);
+    NON_COPYABLE(BaseRawSharedMemory);
 
     Synch::Mutex _m;
     LPVOID _ptr;
 
+  protected:
+    explicit BaseRawSharedMemory(DWORD dwSize, const std::wstring &sName);
+    ~BaseRawSharedMemory();
+
+    void access(std::function< void(LPVOID) > f);
+  };
+
+  class RawSharedMemory : public BaseRawSharedMemory
+  {
+    NON_COPYABLE(RawSharedMemory);
+
   public:
-    explicit RawSharedMemory(DWORD dwSize);
+    explicit RawSharedMemory(DWORD dwSize, const std::wstring &sName);
     ~RawSharedMemory();
 
     void access(std::function< void(LPVOID) > f);
   };
 
   template< typename T >
-  class SharedMemory : private RawSharedMemory
+  class SharedMemory : public BaseRawSharedMemory
   {
     NON_COPYABLE(SharedMemory);
 
   public:
-    explicit SharedMemory() :
-      RawSharedMemory(sizeof(T))
+    explicit SharedMemory(const std::wstring &sName) :
+      BaseRawSharedMemory(sizeof(T),sName)
     {
       ::Log::Method m(__SIGNATURE__);
     }
@@ -54,7 +65,7 @@ namespace Windows
 
     void access(std::function< void(T *) > f)
     {
-      RawSharedMemory::access([f] (LPVOID ptr)
+      BaseRawSharedMemory::access([f] (LPVOID ptr)
         {
           f(reinterpret_cast< T * >(ptr));
         });

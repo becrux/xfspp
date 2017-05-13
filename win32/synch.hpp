@@ -41,14 +41,15 @@ namespace Windows
       void unlock();
     };
 
-    class Semaphore : public Lockable
+    class Semaphore : public Handle<>
     {
       NON_COPYABLE(Semaphore);
 
     public:
-      explicit Semaphore(LONG start, LONG max);
+      explicit Semaphore(LONG start, LONG max, const std::wstring &sName = std::wstring());
 
-      void unlock();
+      void acquire();
+      void release();
     };
 
     class Event : public Handle<>
@@ -56,7 +57,7 @@ namespace Windows
       NON_COPYABLE(Event);
 
     public:
-      explicit Event();
+      explicit Event(const std::wstring &sName = std::wstring());
 
       void waitFor();
       void set();

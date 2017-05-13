@@ -10,6 +10,7 @@
 #define __MEMORY_HPP__
 
 #include <cstdint>
+#include <windows.h>
 
 template< typename T >
 inline void clearMem(T &var)

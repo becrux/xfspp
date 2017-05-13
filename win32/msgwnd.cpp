@@ -51,14 +51,14 @@ void MsgWnd::start()
 
       if (!RegisterClassEx(&wx))
       {
-        sem.unlock();
+        sem.release();
         return;
       }
 
       _hWnd = CreateWindowEx(0,uuidStr.c_str(),NULL,0,0,0,0,0,HWND_MESSAGE,NULL,_hInstance,
                              reinterpret_cast< LPVOID >(this));
 
-      sem.unlock();
+      sem.release();
 
       MethodScope classScope([this, uuidStr] () { UnregisterClass(uuidStr.c_str(),_hInstance); });
 
@@ -80,7 +80,7 @@ void MsgWnd::start()
       }
     }));
 
-  sem.lock();
+  sem.acquire();
 }
 
 void MsgWnd::close()

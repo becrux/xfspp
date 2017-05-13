@@ -10,11 +10,22 @@
 
 #include "win32/thread.hpp"
 
-TEST_CASE("StartUp", "[XFS Manager]")
+TEST_CASE("Threads", "[Win32]")
 {
-  SECTION("loading library")
+  SECTION("simple thread")
   {
-    REQUIRE(true);
+    ULONGLONG startTick = GetTickCount64();
+
+    {
+      Windows::Thread t([]()
+        {
+          SleepEx(2000,FALSE);
+        });
+      
+      REQUIRE(t);
+    }
+
+    REQUIRE((GetTickCount64() - startTick) >= 2000);
   }
 }
 

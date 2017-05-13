@@ -89,7 +89,7 @@ namespace Windows
 
     explicit operator bool() const
     {
-      return _h != NULL;
+      return (_h != NULL) && (_h != INVALID_HANDLE_VALUE);
     }
   };
 }
