@@ -94,7 +94,7 @@ LRESULT CALLBACK MsgWnd::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
   switch (uMsg)
   {
     case WM_NCCREATE:
-      SetWindowLongPtr(hWnd,GWLP_USERDATA,reinterpret_cast< LONG >(reinterpret_cast< LPCREATESTRUCT >(lParam)->lpCreateParams));
+      SetWindowLongPtr(hWnd,GWLP_USERDATA,reinterpret_cast< LONG_PTR >(reinterpret_cast< LPCREATESTRUCT >(lParam)->lpCreateParams));
       break;
 
     case WM_CLOSE:

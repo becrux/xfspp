@@ -19,6 +19,7 @@ if(NOT EXISTS ${CMAKE_SOURCE_DIR}/ext/catch)
   file(DOWNLOAD https://github.com/philsquared/Catch/releases/download/v1.9.3/catch.hpp ${CMAKE_SOURCE_DIR}/ext/catch/catch.hpp)
 endif()
 
+include(CTest)
 enable_testing()
 
 add_definitions(
@@ -63,6 +64,12 @@ else()
   set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g -g3 ${CMAKE_CXX_FLAGS}")
   set(CMAKE_CXX_FLAGS_RELEASE "-s -O3 ${CMAKE_CXX_FLAGS}")
   set(CMAKE_SHARED_LINKER_FLAGS "-Wl,--subsystem,windows,--kill-at,--enable-stdcall-fixup ${CMAKE_SHARED_LINKER_FLAGS}")
+  
+  if (COVERAGE)
+    set(CMAKE_CXX_FLAGS_DEBUG "--coverage ${CMAKE_CXX_FLAGS_DEBUG}")
+    set(CMAKE_EXE_LINKER_FLAGS "--coverage ${CMAKE_EXE_LINKER_FLAGS}")
+    set(CMAKE_SHARED_LINKER_FLAGS "--coverage ${CMAKE_SHARED_LINKER_FLAGS}")
+  endif()
 endif()
 
 get_cmake_property(_variableNames VARIABLES)
