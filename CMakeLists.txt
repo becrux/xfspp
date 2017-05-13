@@ -95,7 +95,7 @@ function(ADD_XFSPP_TEST targetName)
   set(args ARGS)
   set(libs LIBS)
   set(deps DEPENDS)
-  cmake_parse_arguments(PARSED_ARGS "" "" "SOURCES;DEPS;LIBS;RUN_WITH_PARAMS" ${ARGN})
+  cmake_parse_arguments(PARSED_ARGS "" "" "SOURCES;DEPS;LIBS;TIMEOUT;RUN_WITH_PARAMS" ${ARGN})
   
   add_executable(${targetName}
     EXCLUDE_FROM_ALL
@@ -112,6 +112,12 @@ function(ADD_XFSPP_TEST targetName)
   add_dependencies(tests ${targetName})
   
   add_test(NAME ${targetName} COMMAND ${targetName} ${PARSED_ARGS_RUN_WITH_PARAMS} "-s" "-d" "yes" "-r" "junit" "-o" "${CMAKE_BINARY_DIR}/tests_xml/${targetName}.xml")
+
+  if(PARSED_ARGS_TIMEOUT)
+    set_tests_properties(${targetName} PROPERTIES TIMEOUT ${PARSED_ARGS_TIMEOUT})
+  else()
+    set_tests_properties(${targetName} PROPERTIES TIMEOUT 30)
+  endif()
 endfunction()
 
 add_subdirectory(mgr)
