@@ -17,7 +17,7 @@ TEST_CASE("Threads", "[Win32]")
     ULONGLONG startTick = GetTickCount64();
 
     {
-      Windows::Thread t([]()
+      Windows::Thread t([] ()
         {
           SleepEx(2000,FALSE);
         });

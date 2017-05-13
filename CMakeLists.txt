@@ -116,7 +116,7 @@ function(ADD_XFSPP_TEST targetName)
   if(PARSED_ARGS_TIMEOUT)
     set_tests_properties(${targetName} PROPERTIES TIMEOUT ${PARSED_ARGS_TIMEOUT})
   else()
-    set_tests_properties(${targetName} PROPERTIES TIMEOUT 30)
+    set_tests_properties(${targetName} PROPERTIES TIMEOUT 120)
   endif()
 endfunction()
 
