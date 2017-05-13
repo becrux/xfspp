@@ -18,7 +18,7 @@ using namespace Log;
 
 std::string Logger::getPathFromRegistry()
 {
-  return Windows::Registry::Key(L"Software\\xfspp",HKEY_LOCAL_MACHINE).value< std::string >(L"logFileName","xfspp_mgr.log");
+  return Windows::Registry::Key(L"Software\\xfspp",HKEY_LOCAL_MACHINE).value(L"logFileName","xfspp_mgr.log");
 }
 
 std::ostream &Logger::getFileStreamInstance()

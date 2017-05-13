@@ -106,3 +106,31 @@ std::map< std::wstring,std::tuple< DWORD,std::vector< BYTE > > > Key::values() c
 
   return res;
 }
+
+std::wstring Key::value(const std::wstring &sValueName, const std::wstring &defaultValue) const
+{
+  TCHAR buf[1024];
+  DWORD bufSize = 1024 * sizeof(TCHAR);
+
+  clearMem(buf);
+  if (RegGetValue(handle(),L"",sValueName.c_str(),RRF_RT_REG_SZ | RRF_NOEXPAND,NULL,buf,&bufSize) != ERROR_SUCCESS)
+    return defaultValue;
+
+  return std::wstring(buf);
+}
+
+std::string Key::value(const std::wstring &sValueName,const std::string &defaultValue) const
+{
+  return convertTo(value(sValueName,convertTo(defaultValue)));
+}
+
+Windows::Error< LRESULT > Key::setValue(const std::wstring &sValueName,const std::wstring &tValue)
+{
+  return Error< LRESULT >(
+    RegSetValueEx(handle(),sValueName.c_str(),0,REG_SZ,reinterpret_cast< const BYTE * >(tValue.c_str()),tValue.size() * sizeof(wchar_t)));
+}
+
+Windows::Error< LRESULT > Key::setValue(const std::wstring &sValueName, const std::string &tValue)
+{
+  return setValue(sValueName,convertTo(tValue));
+}

@@ -47,6 +47,9 @@ namespace Windows
       template< typename T >
       T value(const std::wstring &sValueName, const T &defaultValue = T()) const
       {
+        static_assert(!std::is_same< T,std::string >::value,"Cannot be called with std::string type");
+        static_assert(!std::is_same< T,std::wstring >::value,"Cannot be called with std::wstring type");
+
         TCHAR buf[1024];
         DWORD bufSize = 1024 * sizeof(TCHAR);
 
@@ -61,24 +64,8 @@ namespace Windows
         return res;
       }
 
-      template<>
-      std::wstring value(const std::wstring &sValueName, const std::wstring &defaultValue) const
-      {
-        TCHAR buf[1024];
-        DWORD bufSize = 1024 * sizeof(TCHAR);
-
-        clearMem(buf);
-        if (RegGetValue(handle(),L"",sValueName.c_str(),RRF_RT_REG_SZ | RRF_NOEXPAND,NULL,buf,&bufSize) != ERROR_SUCCESS)
-          return defaultValue;
-
-        return std::wstring(buf);
-      }
-
-      template<>
-      std::string value< std::string >(const std::wstring &sValueName,const std::string &defaultValue) const
-      {
-        return convertTo(value< std::wstring >(sValueName,convertTo(defaultValue)));
-      }
+      std::wstring value(const std::wstring &sValueName, const std::wstring &defaultValue) const;
+      std::string value(const std::wstring &sValueName,const std::string &defaultValue) const;
 
       Error< LRESULT > remove(const std::wstring &sSubPath);
       Error< LRESULT > removeValue(const std::wstring &sValueName);
@@ -86,6 +73,9 @@ namespace Windows
       template< typename T >
       Error< LRESULT > setValue(const std::wstring &sValueName, const T &tValue)
       {
+        static_assert(!std::is_same< T,std::string >::value,"Cannot be called with std::string type");
+        static_assert(!std::is_same< T,std::wstring >::value,"Cannot be called with std::wstring type");
+
         std::wostringstream oss;
 
         oss << tValue;
@@ -96,11 +86,8 @@ namespace Windows
           RegSetValueEx(handle(),sValueName.c_str(),0,REG_SZ,reinterpret_cast< const BYTE * >(vs.c_str()),vs.size() * sizeof(wchar_t)));
       }
 
-      template<>
-      Error< LRESULT > setValue< std::string >(const std::wstring &sValueName, const std::string &tValue)
-      {
-        return setValue< std::wstring >(sValueName,convertTo(tValue));
-      }
+      Error< LRESULT > setValue(const std::wstring &sValueName, const std::wstring &tValue);
+      Error< LRESULT > setValue(const std::wstring &sValueName, const std::string &tValue);
     };
   }
 }
