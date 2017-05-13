@@ -13,11 +13,10 @@
 
 std::string convertTo(const std::wstring &s)
 {
-  int sz = static_cast< int >(s.length());
-  int nd = WideCharToMultiByte(CP_UTF8,0,s.c_str(),sz,NULL,0,NULL,NULL);
+  int nd = WideCharToMultiByte(CP_UTF8,0,s.c_str(),-1,NULL,0,NULL,NULL);
 
   char *buf = new char[static_cast< unsigned int >(nd)];
-  WideCharToMultiByte(CP_UTF8,0,s.c_str(),sz,buf,nd,NULL,NULL);
+  WideCharToMultiByte(CP_UTF8,0,s.c_str(),-1,buf,nd,NULL,NULL);
   
   std::string res(buf);
 
@@ -28,11 +27,10 @@ std::string convertTo(const std::wstring &s)
 
 std::wstring convertTo(const std::string &s)
 {
-  int sz = static_cast< int >(s.length());
-  int nd = MultiByteToWideChar(CP_UTF8,0,s.c_str(),sz,NULL,0);
+  int nd = MultiByteToWideChar(CP_UTF8,0,s.c_str(),-1,NULL,0);
 
   wchar_t *buf = new wchar_t[static_cast< unsigned int >(nd)];
-  MultiByteToWideChar(CP_UTF8,0,s.c_str(),sz,buf,nd);
+  MultiByteToWideChar(CP_UTF8,0,s.c_str(),-1,buf,nd);
 
   std::wstring res(buf);
 

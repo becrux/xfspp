@@ -44,7 +44,7 @@ ADD_XFSPP_TEST(tests_win32_timer
     ../../win32/registry.cpp
     ../../log/log.cpp
     ../../util/string.cpp
-  
+
   LIBS
     shlwapi
 )
@@ -66,7 +66,7 @@ ADD_XFSPP_TEST(tests_win32_library
     ../../win32/registry.cpp
     ../../log/log.cpp
     ../../util/string.cpp
-  
+
   LIBS
     shlwapi
 )
@@ -81,7 +81,7 @@ ADD_XFSPP_TEST(tests_win32_shared_memory
     ../../win32/registry.cpp
     ../../log/log.cpp
     ../../util/string.cpp
-  
+
   LIBS
     rpcrt4
     shlwapi
@@ -94,7 +94,17 @@ ADD_XFSPP_TEST(tests_win32_registry
     ../../win32/environment.cpp
     ../../log/log.cpp
     ../../util/string.cpp
-    
+
+  LIBS
+    shlwapi
+)
+
+ADD_XFSPP_TEST(tests_win32_environment
+  SOURCES
+    environment.cpp
+    ../../win32/environment.cpp
+    ../../util/string.cpp
+
   LIBS
     shlwapi
 )
@@ -110,7 +120,7 @@ ADD_XFSPP_TEST(tests_win32_window
     ../../win32/registry.cpp
     ../../log/log.cpp
     ../../util/string.cpp
-    
+
   LIBS
     rpcrt4
     shlwapi

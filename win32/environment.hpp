@@ -43,7 +43,7 @@ namespace Windows
 
       bool has(const std::wstring &key) const;
 
-      std::wstring get(const std::wstring &key) const;
+      std::wstring get(const std::wstring &key, const std::wstring &sDefault = std::wstring()) const;
       void set(const std::wstring &key, const std::wstring &value);
       void remove(const std::wstring &key);
 

@@ -1,4 +1,4 @@
-/* log/log.cpp
+/* win32/environment.cpp
  *
  * Copyright (C) 2007 Antonio Di Monaco
  *
@@ -58,11 +58,11 @@ Manager &Manager::instance()
   return inst;
 }
 
-std::wstring Manager::get(const std::wstring &key) const
+std::wstring Manager::get(const std::wstring &key, const std::wstring &sDefault) const
 {
   auto it = _vars.find(key);
 
-  return (it != _vars.end())? it->second : std::wstring();
+  return (it != _vars.end())? it->second : sDefault;
 }
 
 bool Manager::has(const std::wstring &key) const

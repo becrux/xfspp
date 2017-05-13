@@ -9,16 +9,40 @@
 #include <tuple>
 
 #include "win32/registry.hpp"
-#include "log/log.hpp"
 
 using namespace Windows::Registry;
 
-Key::Key(const std::wstring &sPath, HKEY rootKey) :
+Key::Key(const std::wstring &sPath, bool create) :
   Handle< HKEY,LSTATUS >(NULL,RegCloseKey),
   _disposition(0)
 {
+  init(sPath,HKEY_CURRENT_USER,create);
+}
+
+Key::Key(const std::wstring &sPath, HKEY rootKey, bool create) :
+  Handle< HKEY,LSTATUS >(NULL,RegCloseKey),
+  _disposition(0)
+{
+  init(sPath,rootKey,create);
+}
+
+void Key::init(const std::wstring &sPath,HKEY rootKey,bool create)
+{
   HKEY hKey;
-  RegCreateKeyEx(rootKey,sPath.c_str(),0,NULL,REG_OPTION_NON_VOLATILE,KEY_ALL_ACCESS,NULL,&hKey,&_disposition);
+
+  if (create)
+  {
+    if (RegCreateKeyEx(rootKey,sPath.c_str(),0,NULL,REG_OPTION_NON_VOLATILE,KEY_ALL_ACCESS,NULL,&hKey,&_disposition) != ERROR_SUCCESS)
+      hKey = NULL;
+  }
+  else
+  {
+    if (RegOpenKeyEx(rootKey,sPath.c_str(),0,KEY_ALL_ACCESS,&hKey) != ERROR_SUCCESS)
+      hKey = NULL;
+
+    _disposition = REG_OPENED_EXISTING_KEY;
+  }
+
   setHandle(hKey);
 }
 
@@ -29,15 +53,11 @@ DWORD Key::disposition() const
 
 Windows::Error< LRESULT > Key::remove(const std::wstring &sSubPath)
 {
-  ::Log::Method(__SIGNATURE__,WSTRING(L"sSubPath = " << sSubPath));
-
   return Error< LRESULT >(RegDeleteKeyEx(handle(),sSubPath.c_str(),0,0));
 }
 
 Windows::Error< LRESULT > Key::removeValue(const std::wstring &sValueName)
 {
-  ::Log::Method(__SIGNATURE__,WSTRING(L"sValueName = " << sValueName));
-
   return Error< LRESULT >(RegDeleteValue(handle(), sValueName.c_str()));
 }
 
@@ -85,11 +105,4 @@ std::map< std::wstring,std::tuple< DWORD,std::vector< BYTE > > > Key::values() c
   }
 
   return res;
-}
-
-Windows::Error< LRESULT > Key::setValue(const std::wstring &sValueName, DWORD type, const std::vector< BYTE > &newValue)
-{
-  ::Log::Method(__SIGNATURE__,WSTRING(L"sValueName = " << sValueName));
-
-  return Error< LRESULT >(RegSetValueEx(handle(),sValueName.c_str(),0,type,newValue.data(),newValue.size()));
 }
