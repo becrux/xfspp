@@ -18,32 +18,37 @@ TEST_CASE("Message window", "[Win32]")
     Windows::Synch::Semaphore s(0,1);
     
     REQUIRE(s);
-    
+
+    HWND hWnd = NULL;
     bool flag = false;
     
-    Windows::MsgWnd w(
-      GetModuleHandle(NULL),
-      [&s, &flag] (UINT uMsg, WPARAM wP, LPARAM lP)
-        {
-          if ((uMsg == (WM_USER + 1)) &&
-              (wP == static_cast< WPARAM >(0x01234567)) &&
-              (lP == static_cast< LPARAM >(0x89ABCDEF)))
-            flag = true;
+    {
+      Windows::MsgWnd w(
+        GetModuleHandle(NULL),
+        [&s, &flag] (UINT uMsg, WPARAM wP, LPARAM lP)
+          {
+            if ((uMsg == (WM_USER + 1)) &&
+                (wP == static_cast< WPARAM >(0x01234567)) &&
+                (lP == static_cast< LPARAM >(0x89ABCDEF)))
+              flag = true;
           
-          s.release();
-        });
+            s.release();
+          });
 
-    w.start();
-    REQUIRE(w.handle() != NULL);
+      w.start();
+      REQUIRE((hWnd = w.handle()) != NULL);
 
-    PostMessage(
-      w.handle(),
-      WM_USER + 1,
-      static_cast< WPARAM >(0x01234567),
-      static_cast< LPARAM >(0x89ABCDEF));
+      REQUIRE(PostMessage(
+        hWnd,
+        WM_USER + 1,
+        static_cast< WPARAM >(0x01234567),
+        static_cast< LPARAM >(0x89ABCDEF)) != 0);
     
-    s.acquire();
-    REQUIRE(flag);
+      s.acquire();
+      REQUIRE(flag);
+    }
+    
+    REQUIRE(PostMessage(hWnd,WM_USER + 1,NULL,NULL) == 0);
   }
 }
 
