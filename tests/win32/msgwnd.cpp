@@ -9,24 +9,41 @@
 #include "tests/catch.hpp"
 
 #include "win32/msgwnd.hpp"
+#include "win32/synch.hpp"
 
 TEST_CASE("Message window", "[Win32]")
 {
   SECTION("send a message")
   {
+    Windows::Synch::Semaphore s(0,1);
+    
+    REQUIRE(s);
+    
+    bool flag = false;
+    
     Windows::MsgWnd w(
       GetModuleHandle(NULL),
-      [] (UINT uMsg, WPARAM wP, LPARAM lP)
+      [&s, &flag] (UINT uMsg, WPARAM wP, LPARAM lP)
         {
-          REQUIRE(uMsg == (WM_USER + 1));
-          REQUIRE(wP == static_cast< WPARAM >(0x01234567));
-          REQUIRE(lP == static_cast< LPARAM >(0x89ABCDEF));
+          if ((uMsg == (WM_USER + 1)) &&
+              (wP == static_cast< WPARAM >(0x01234567)) &&
+              (lP == static_cast< LPARAM >(0x89ABCDEF)))
+            flag = true;
+          
+          s.release();
         });
 
     w.start();
     REQUIRE(w.handle() != NULL);
 
-    SendMessage(w.handle(),WM_USER + 1,static_cast< WPARAM >(0x01234567),static_cast< LPARAM >(0x89ABCDEF));
+    PostMessage(
+      w.handle(),
+      WM_USER + 1,
+      static_cast< WPARAM >(0x01234567),
+      static_cast< LPARAM >(0x89ABCDEF));
+    
+    s.acquire();
+    REQUIRE(flag);
   }
 }
 
