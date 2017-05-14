@@ -61,7 +61,7 @@ if(MSVC)
   set(CMAKE_SHARED_LINKER_FLAGS_MINSIZEREL "/RELEASE /LTCG /OPT:REF /OPT:ICF /INCREMENTAL:NO ${CMAKE_SHARED_LINKER_FLAGS}")
 else()
   set(CMAKE_CXX_FLAGS "-municode -frtti -fexceptions -std=c++11 -std=gnu++11 -pedantic -Wall -Wextra -Wuninitialized -Wold-style-cast -Woverloaded-virtual -Wnoexcept -Wnon-virtual-dtor -Winit-self -Wmissing-include-dirs -Wunused-parameter -Wctor-dtor-privacy -Wswitch-default -Wshadow -Wno-unknown-pragmas -Wundef -Wredundant-decls")
-  set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g -g3 -ggdb -fno-omit-frame-pointer -fno-optimize-sibling-calls -fno-inline ${CMAKE_CXX_FLAGS}")
+  set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g -g3 -ggdb -fno-omit-frame-pointer -fno-optimize-sibling-calls -fno-inline -fno-elide-constructors ${CMAKE_CXX_FLAGS}")
   set(CMAKE_CXX_FLAGS_RELEASE "-s -O3 ${CMAKE_CXX_FLAGS}")
   set(CMAKE_SHARED_LINKER_FLAGS "-Wl,--subsystem,windows,--kill-at,--enable-stdcall-fixup ${CMAKE_SHARED_LINKER_FLAGS}")
   
