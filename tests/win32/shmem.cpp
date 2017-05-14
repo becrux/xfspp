@@ -6,13 +6,15 @@
  * of the MIT license.  See the LICENSE file for details.
  */
 
+#include <numeric>
+
 #include "tests/catch.hpp"
 
 #include "win32/shmem.hpp"
 
 TEST_CASE("Shared memory", "[Win32]")
 {
-  SECTION("access")
+  SECTION("typed access")
   {
     Windows::SharedMemory< DWORD > sm(L"test_shared_memory");
     REQUIRE(sm);
@@ -35,6 +37,34 @@ TEST_CASE("Shared memory", "[Win32]")
       {
         REQUIRE(*p == 5);
       });
+  }
+
+  SECTION("raw access")
+  {
+    Windows::RawSharedMemory sm(256,L"test_raw_shared_memory");
+    REQUIRE(sm);
+
+    HANDLE h = OpenFileMapping(FILE_MAP_ALL_ACCESS,FALSE,L"Local\\test_raw_shared_memory_SHMEM");
+    REQUIRE(h != NULL);
+
+    LPVOID p = MapViewOfFileEx(h,FILE_MAP_ALL_ACCESS,0,0,0,NULL);
+    REQUIRE(p != NULL);
+
+    UnmapViewOfFile(p);
+    CloseHandle(h);
+
+    sm.access([] (DWORD size, LPVOID p)
+      {
+        BYTE *ptr = reinterpret_cast< BYTE * >(p);
+        std::iota(ptr,ptr + size,0);
+      });
+
+    sm.access([] (DWORD size, LPVOID p)
+      {
+        BYTE *ptr = reinterpret_cast< BYTE * >(p);
+        REQUIRE(*ptr == 0);
+        REQUIRE(*(ptr + size - 1) == 255);
+    });
   }
 }
 

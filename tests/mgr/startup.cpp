@@ -23,7 +23,7 @@ TEST_CASE("StartUp", "[XFS Manager]")
   {
     REQUIRE(lib != nullptr);
   }
-  
+
   SECTION("passing bad version range")
   {
     XFS::VersionRange vr(XFS::Version(3,20),XFS::Version(3,0));

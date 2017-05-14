@@ -13,37 +13,38 @@
 using namespace Windows::Registry;
 
 Key::Key(const std::wstring &sPath, bool create) :
-  Handle< HKEY,LSTATUS >(NULL,RegCloseKey),
+  Handle< HKEY,LSTATUS,LONG >(NULL,RegCloseKey),
   _disposition(0)
 {
   init(sPath,HKEY_CURRENT_USER,create);
 }
 
 Key::Key(const std::wstring &sPath, HKEY rootKey, bool create) :
-  Handle< HKEY,LSTATUS >(NULL,RegCloseKey),
+  Handle< HKEY,LSTATUS,LONG >(NULL,RegCloseKey),
   _disposition(0)
 {
   init(sPath,rootKey,create);
 }
 
-void Key::init(const std::wstring &sPath,HKEY rootKey,bool create)
+void Key::init(const std::wstring &sPath, HKEY rootKey, bool create)
 {
   HKEY hKey;
+  LONG err = ERROR_SUCCESS;
 
   if (create)
   {
-    if (RegCreateKeyEx(rootKey,sPath.c_str(),0,NULL,REG_OPTION_NON_VOLATILE,KEY_ALL_ACCESS,NULL,&hKey,&_disposition) != ERROR_SUCCESS)
+    if ((err = RegCreateKeyEx(rootKey,sPath.c_str(),0,NULL,REG_OPTION_NON_VOLATILE,KEY_ALL_ACCESS,NULL,&hKey,&_disposition)) != ERROR_SUCCESS)
       hKey = NULL;
   }
   else
   {
-    if (RegOpenKeyEx(rootKey,sPath.c_str(),0,KEY_ALL_ACCESS,&hKey) != ERROR_SUCCESS)
+    if ((err = RegOpenKeyEx(rootKey,sPath.c_str(),0,KEY_ALL_ACCESS,&hKey)) != ERROR_SUCCESS)
       hKey = NULL;
 
     _disposition = REG_OPENED_EXISTING_KEY;
   }
 
-  setHandle(hKey);
+  setHandle(hKey,err);
 }
 
 DWORD Key::disposition() const

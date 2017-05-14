@@ -20,6 +20,7 @@ BaseRawSharedMemory::BaseRawSharedMemory(DWORD dwSize, const std::wstring &sName
     dwSize,
     (std::wstring(L"Local\\") + sName + std::wstring(L"_SHMEM")).c_str())),
   _m((sName + std::wstring(L"_MUTEX")).c_str()),
+  _size(dwSize),
   _ptr(MapViewOfFileEx(handle(),FILE_MAP_ALL_ACCESS,0,0,0,NULL))
 {
   ::Log::Method m(__SIGNATURE__,WSTRING(L"sName = " << sName));
@@ -32,13 +33,13 @@ BaseRawSharedMemory::~BaseRawSharedMemory()
   UnmapViewOfFile(_ptr);
 }
 
-void BaseRawSharedMemory::access(std::function< void(LPVOID) > f)
+void BaseRawSharedMemory::access(std::function< void(DWORD, LPVOID) > f)
 {
   ::Log::Method m(__SIGNATURE__);
 
   Synch::Locker< Synch::Mutex > lock(_m);
 
-  f(_ptr);
+  f(_size,_ptr);
 }
 
 RawSharedMemory::RawSharedMemory(DWORD dwSize,const std::wstring &sName) :
@@ -52,7 +53,7 @@ RawSharedMemory::~RawSharedMemory()
   ::Log::Method m(__SIGNATURE__);
 }
 
-void RawSharedMemory::access(std::function< void(LPVOID) > f)
+void RawSharedMemory::access(std::function< void(DWORD, LPVOID) > f)
 {
   ::Log::Method m(__SIGNATURE__);
 

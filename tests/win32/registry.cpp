@@ -30,6 +30,18 @@ TEST_CASE("Registry", "[Win32]")
     REQUIRE(!k.subKeys().empty());
   }
 
+  SECTION("existing HKLM - do_not_create")
+  {
+    Key k(L"Software\\Microsoft\\Windows\\CurrentVersion",HKEY_LOCAL_MACHINE,false);
+
+    if (k.lastError().value() == ERROR_ACCESS_DENIED)
+      return;
+
+    CHECK(k);
+    CHECK(k.disposition() == REG_OPENED_EXISTING_KEY);
+    CHECK(!k.subKeys().empty());
+  }
+
   SECTION("not existing - create")
   {
     {
@@ -54,6 +66,9 @@ TEST_CASE("Registry", "[Win32]")
       k.removeValue(L"ValueName");
       REQUIRE(k.value< DWORD >(L"ValueName",0xDEADBEEF) == 0xDEADBEEF);
       REQUIRE(k.values().empty());
+
+      REQUIRE(k.value(L"ValueName","Test String") == "Test String");
+      REQUIRE(k.value(L"ValueName",L"Test Wide String") == L"Test Wide String");
     }
 
     {

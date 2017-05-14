@@ -26,13 +26,14 @@ namespace Windows
     NON_COPYABLE(BaseRawSharedMemory);
 
     Synch::Mutex _m;
+    DWORD _size;
     LPVOID _ptr;
 
   protected:
     explicit BaseRawSharedMemory(DWORD dwSize, const std::wstring &sName);
     ~BaseRawSharedMemory();
 
-    void access(std::function< void(LPVOID) > f);
+    void access(std::function< void(DWORD, LPVOID) > f);
   };
 
   class RawSharedMemory : public BaseRawSharedMemory
@@ -43,7 +44,7 @@ namespace Windows
     explicit RawSharedMemory(DWORD dwSize, const std::wstring &sName);
     ~RawSharedMemory();
 
-    void access(std::function< void(LPVOID) > f);
+    void access(std::function< void(DWORD, LPVOID) > f);
   };
 
   template< typename T >
@@ -65,9 +66,9 @@ namespace Windows
 
     void access(std::function< void(T *) > f)
     {
-      BaseRawSharedMemory::access([f] (LPVOID ptr)
+      BaseRawSharedMemory::access([f] (DWORD size, LPVOID ptr)
         {
-          f(reinterpret_cast< T * >(ptr));
+          f(reinterpret_cast< T * >(size,ptr));
         });
     }
   };

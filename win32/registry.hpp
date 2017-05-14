@@ -24,7 +24,7 @@ namespace Windows
 {
   namespace Registry
   {
-    class Key : public Handle< HKEY,LSTATUS >
+    class Key : public Handle< HKEY,LSTATUS,LONG >
     {
       DWORD _disposition;
 

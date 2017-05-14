@@ -19,21 +19,27 @@ namespace Windows
 {
   inline BOOL __stdcall nullCloseHandle(HANDLE) { return TRUE; }
 
-  template< typename T = HANDLE, typename R = BOOL >
+  template< typename T = HANDLE, typename R = BOOL, typename E = DWORD >
   class Handle
   {
     NON_COPYABLE(Handle);
 
     T _h;
-    Error<> _lastError;
+    Error< E > _lastError;
     R ((__stdcall *_closeF))(T);
 
     void setLastError()
     {
-      _lastError = ((_h == NULL) || (_h == INVALID_HANDLE_VALUE))? Error<>() : Error<>(ERROR_SUCCESS);
+      _lastError = ((_h == NULL) || (_h == INVALID_HANDLE_VALUE))? Error< E >() : Error< E >(ERROR_SUCCESS);
     }
 
   protected:
+    void setHandle(T h, E errorValue)
+    {
+      _h = h;
+      _lastError = Error< E >(errorValue);
+    }
+
     void setHandle(T h)
     {
       _h = h;
@@ -57,6 +63,7 @@ namespace Windows
       o._h = NULL;
       o._lastError = ERROR_SUCCESS;
     }
+
     ~Handle()
     {
       if (_h != NULL)
@@ -71,7 +78,7 @@ namespace Windows
       return _h;
     }
 
-    Error<> lastError() const
+    Error< E > lastError() const
     {
       return _lastError;
     }
