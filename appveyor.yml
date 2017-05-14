@@ -86,5 +86,5 @@ test_script:
 
       if ($env:PLATFORM -eq 'MinGW-w64' -and $env:CONFIG -eq 'Debug')
       {
-          Start-Process coveralls.exe -ArgumentList "--include . -r ." -Wait
+          Start-Process coveralls.exe -ArgumentList "-r .. -e tests -e ext -e cen -x cpp -x hpp" -Wait
       }
