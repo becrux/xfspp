@@ -2,6 +2,9 @@ image:
   Visual Studio 2015
 
 environment:
+  COVERALLS_REPO_TOKEN:
+    secure: pC5gv/PNQxgAiwVFw2EGKSRmYT73YMCWykI/pQxxBgBfjp+WTDf6Puqtb3pW+wJB
+
   matrix:
     - GENERATOR: "Visual Studio 12 2013"
       PLATFORM: MSVC
@@ -58,6 +61,8 @@ install:
   - if [%PLATFORM%]==[MinGW-w64] set PATH=C:\mingw32\bin;%PATH%
   - if [%PLATFORM%]==[CLang] set PATH="C:\Program Files\LLVM\bin";%PATH%
   - if [%PLATFORM%]==[CLang] clang-cl -v
+  - if [%PLATFORM%]==[MinGW-w64] python -m ensurepip
+  - if [%PLATFORM%]==[MinGW-w64] python -m pip install cpp-coveralls
 
 build_script:
   - mkdir build
@@ -77,4 +82,9 @@ test_script:
       {
           $wc = New-Object 'System.Net.WebClient'
           $wc.UploadFile("https://ci.appveyor.com/api/testresults/junit/$($env:APPVEYOR_JOB_ID)", (Resolve-Path $files[$i].FullName))
+      }
+
+      if ($env:PLATFORM -eq 'MinGW-w64' -and $env:CONFIG -eq 'Debug')
+      {
+          Start-Process coveralls.exe -ArgumentList "--include . -r ." -Wait
       }
