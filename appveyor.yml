@@ -69,7 +69,7 @@ build_script:
   - cd build
   - if [%PLATFORM%]==[CLang] cmake -G "%GENERATOR%" -T"LLVM-vs2014" ..
   - if [%PLATFORM%]==[MSVC] cmake -G "%GENERATOR%" ..
-  - if [%PLATFORM%]==[MinGW-w64] cmake -G "%GENERATOR%" -DCMAKE_BUILD_TYPE="%CONFIG% ..
+  - if [%PLATFORM%]==[MinGW-w64] cmake -G "%GENERATOR%" -DCMAKE_BUILD_TYPE="%CONFIG%" ..
   - if [%PLATFORM%]==[MinGW-w64] (cmake --build . --config "%CONFIG%") else (cmake --build . --config "%CONFIG%" --target ALL_BUILD -- /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll")
 
 test_script:
