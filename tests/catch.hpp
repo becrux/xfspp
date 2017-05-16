@@ -17,40 +17,19 @@ int run(int argc, wchar_t const* const* const argv, std::function< void (const s
 {
   SetEnvironmentVariable(L"XFSPP_LOG_ON_CONSOLE",L"1");
 
-  char **utf8Argv = new char *[argc];
   for (int i = 0; i < argc; ++i)
-	utf8Argv[i] = nullptr;
-
-  bool nextIsALib = false;
-  int idx = 0;
-  for (int i = 0; i < argc; ++i)
-  {
 	if (std::wstring(argv[i]) == L"--lib")
-	  nextIsALib = true;
-	else if (nextIsALib)
-	{
-	  nextIsALib = false;
+    {
 	  if (initLibF)
-		initLibF(std::wstring(argv[i]));
-	}
-	else
-	{
-      int bufSize = WideCharToMultiByte(CP_UTF8,0,argv[i],-1,NULL,0,NULL,NULL);
+		initLibF(std::wstring(argv[i+1]));
       
-      utf8Argv[idx] = new char[bufSize];
-      
-      WideCharToMultiByte(CP_UTF8,0,argv[i],-1,utf8Argv[idx++],bufSize,NULL,NULL);
-	}
-  }
+      std::swap(argv[argc-2],argv[i]);
+      std::swap(argv[argc-1],argv[i+1]);
+      argc -= 2;
+      break;
+    }
 
-  int returnCode = Catch::Session().run(idx,utf8Argv);
-
-  for (int i = 0; i < idx; ++i)
-    delete [] utf8Argv[i];
-
-  delete [] utf8Argv;
-
-  return returnCode;
+  return Catch::Session().run(argc,argv);
 }
 
 #ifdef _MSC_VER
