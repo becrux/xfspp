@@ -18,13 +18,10 @@ std::string convertTo(const std::wstring &s)
   if (!nd)
     throw Windows::Exception();
 
-  char *buf = new char[static_cast< unsigned int >(nd)];
-  if (!WideCharToMultiByte(CP_UTF8,0,s.c_str(),-1,buf,nd,NULL,NULL))
+  std::string res(nd,'\0');
+
+  if (!WideCharToMultiByte(CP_UTF8,0,s.c_str(),-1,const_cast< LPSTR >(res.data()),nd,NULL,NULL))
     throw Windows::Exception();
-
-  std::string res(buf);
-
-  delete [] buf;
 
   return res;
 }
@@ -35,13 +32,10 @@ std::wstring convertTo(const std::string &s)
   if (!nd)
     throw Windows::Exception();
 
-  wchar_t *buf = new wchar_t[static_cast< unsigned int >(nd)];
-  if (!MultiByteToWideChar(CP_UTF8,0,s.c_str(),-1,buf,nd))
+  std::wstring res(nd,L'\0');
+
+  if (!MultiByteToWideChar(CP_UTF8,0,s.c_str(),-1,const_cast< LPWSTR >(res.data()),nd))
     throw Windows::Exception();
-
-  std::wstring res(buf);
-
-  delete [] buf;
 
   return res;
 }

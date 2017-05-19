@@ -12,7 +12,6 @@
 
 #include <windows.h>
 
-#include "win32/error.hpp"
 #include "util/constraints.hpp"
 #include "win32/exception.hpp"
 
@@ -53,9 +52,8 @@ namespace Windows
   public:
     Handle(Handle &&o) :
       _h(o._h),
-      _lastError(o._lastError)
+      _closeF(o._closeF)
     {
-      _closeF = o._closeF;
       o._h = NULL;
     }
 
