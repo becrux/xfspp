@@ -25,7 +25,7 @@ TEST_CASE("Threads", "[Win32]")
       REQUIRE(t);
     }
 
-    REQUIRE((GetTickCount64() - startTick) >= 2000);
+    REQUIRE((GetTickCount64() - startTick) >= 1500);
   }
 }
 

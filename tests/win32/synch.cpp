@@ -49,7 +49,7 @@ TEST_CASE("Synch", "[Win32]")
       });
 
     s.acquire();
-    REQUIRE((GetTickCount64() - startTick) >= 2000);
+    REQUIRE((GetTickCount64() - startTick) >= 1500);
   }
 
   SECTION("global semaphore")
@@ -79,7 +79,7 @@ TEST_CASE("Synch", "[Win32]")
     });
 
     e.waitFor();
-    REQUIRE((GetTickCount64() - startTick) >= 2000);
+    REQUIRE((GetTickCount64() - startTick) >= 1500);
   }
 
   SECTION("global event")
