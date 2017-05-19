@@ -12,13 +12,17 @@
 #include <windows.h>
 
 #include "win32/environment.hpp"
+#include "win32/exception.hpp"
 
 using namespace Windows::Environment;
 
 Manager::Manager()
 {
-  std::shared_ptr< wchar_t > pEnv(GetEnvironmentStrings(),FreeEnvironmentStrings);
-  wchar_t *p = pEnv.get();
+  wchar_t *p = GetEnvironmentStrings();
+  if (p == NULL)
+    throw Windows::Exception();
+
+  std::shared_ptr< wchar_t > pEnv(p,FreeEnvironmentStrings);
 
   std::wstring currentKey;
   std::wstring currentValue;
@@ -76,6 +80,8 @@ void Manager::set(const std::wstring &key, const std::wstring &value)
   std::wstring v(value);
   if (SetEnvironmentVariable(k.c_str(),v.c_str()))
     _vars[key] = value;
+  else
+    throw Exception();
 }
 
 void Manager::remove(const std::wstring &key)
@@ -83,6 +89,8 @@ void Manager::remove(const std::wstring &key)
   std::wstring k(key);
   if (SetEnvironmentVariable(k.c_str(),NULL))
     _vars.erase(key);
+  else
+    throw Exception();
 }
 
 std::list< std::wstring > Manager::keys() const

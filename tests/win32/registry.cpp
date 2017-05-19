@@ -16,9 +16,7 @@ TEST_CASE("Registry", "[Win32]")
 {
   SECTION("not existing - do_not_create")
   {
-    Key k(L"Software\\Should_Be_An_Unknown_Key",false);
-
-    REQUIRE(!k);
+    REQUIRE_THROWS_AS(Key(L"Software\\Should_Be_An_Unknown_Key",false),Windows::Exception);
   }
 
   SECTION("existing - do_not_create")
@@ -32,14 +30,18 @@ TEST_CASE("Registry", "[Win32]")
 
   SECTION("existing HKLM - do_not_create")
   {
-    Key k(L"Software\\Microsoft\\Windows\\CurrentVersion",HKEY_LOCAL_MACHINE,false);
+    try
+    {
+      Key k(L"Software\\Microsoft\\Windows\\CurrentVersion",HKEY_LOCAL_MACHINE,false);
 
-    if (k.lastError().value() == ERROR_ACCESS_DENIED)
+      CHECK(k);
+      CHECK(k.disposition() == REG_OPENED_EXISTING_KEY);
+      CHECK(!k.subKeys().empty());
+    }
+    catch (const Windows::Exception &)
+    {
       return;
-
-    CHECK(k);
-    CHECK(k.disposition() == REG_OPENED_EXISTING_KEY);
-    CHECK(!k.subKeys().empty());
+    }
   }
 
   SECTION("not existing - create")
@@ -90,9 +92,7 @@ TEST_CASE("Registry", "[Win32]")
     }
 
     {
-      Key k(L"Software\\XFSPP_TEMP",false);
-
-      REQUIRE(!k);
+      REQUIRE_THROWS_AS(Key(L"Software\\XFSPP_TEMP",false),Windows::Exception);
     }
   }
 }

@@ -31,7 +31,7 @@ namespace Windows
     {
       void *f = reinterpret_cast< void * >(GetProcAddress(handle(),funcName));
       if (f == NULL)
-        throw std::invalid_argument(std::string("cannot find ") + std::string(funcName));
+        throw Exception();
 
       return reinterpret_cast< R (__stdcall *)(Args...) >(f)(args...);
     }

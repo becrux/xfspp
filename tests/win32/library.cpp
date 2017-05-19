@@ -14,15 +14,15 @@ TEST_CASE("Libraries", "[Win32]")
 {
   SECTION("not-existing library")
   {
-    REQUIRE(!Windows::Library(L"not_existing_library.dll"));
+    REQUIRE_THROWS_AS(Windows::Library(L"not_existing_library.dll"),Windows::Exception);
   }
 
   SECTION("existing library")
   {
-    Windows::Library l(L"kernel32.dll");
+    REQUIRE_NOTHROW(Windows::Library(L"kernel32.dll"));
 
-    REQUIRE(l);
-    REQUIRE_THROWS_AS(l.call< DWORD >("No_GetTickCount64"),std::invalid_argument);
+    Windows::Library l(L"kernel32.dll");
+    REQUIRE_THROWS_AS(l.call< DWORD >("No_GetTickCount64"),Windows::Exception);
     REQUIRE_NOTHROW(l.call< DWORD >("GetTickCount64"));
   }
 }

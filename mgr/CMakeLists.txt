@@ -7,6 +7,7 @@ set(SOURCES
   ../win32/library.cpp
   ../win32/shmem.cpp
   ../win32/environment.cpp
+  ../win32/exception.cpp
   ../log/log.cpp
   ../common/version.cpp
   ../util/string.cpp

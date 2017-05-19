@@ -7,6 +7,7 @@
  */
 
 #include "util/string.hpp"
+#include "win32/exception.hpp"
 
 #include <windows.h>
 #include <shlwapi.h>
@@ -14,10 +15,13 @@
 std::string convertTo(const std::wstring &s)
 {
   int nd = WideCharToMultiByte(CP_UTF8,0,s.c_str(),-1,NULL,0,NULL,NULL);
+  if (!nd)
+    throw Windows::Exception();
 
   char *buf = new char[static_cast< unsigned int >(nd)];
-  WideCharToMultiByte(CP_UTF8,0,s.c_str(),-1,buf,nd,NULL,NULL);
-  
+  if (!WideCharToMultiByte(CP_UTF8,0,s.c_str(),-1,buf,nd,NULL,NULL))
+    throw Windows::Exception();
+
   std::string res(buf);
 
   delete [] buf;
@@ -28,9 +32,12 @@ std::string convertTo(const std::wstring &s)
 std::wstring convertTo(const std::string &s)
 {
   int nd = MultiByteToWideChar(CP_UTF8,0,s.c_str(),-1,NULL,0);
+  if (!nd)
+    throw Windows::Exception();
 
   wchar_t *buf = new wchar_t[static_cast< unsigned int >(nd)];
-  MultiByteToWideChar(CP_UTF8,0,s.c_str(),-1,buf,nd);
+  if (!MultiByteToWideChar(CP_UTF8,0,s.c_str(),-1,buf,nd))
+    throw Windows::Exception();
 
   std::wstring res(buf);
 

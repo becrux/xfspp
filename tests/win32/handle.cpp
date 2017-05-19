@@ -41,18 +41,12 @@ TEST_CASE("Handles", "[Win32]")
 {
   SECTION("null handle")
   {
-    File f(L"not_existing_file");
-
-    REQUIRE(!f);
-    REQUIRE(f.lastError() == ERROR_FILE_NOT_FOUND);
+    REQUIRE_THROWS_AS(File(L"not_existing_file"),Windows::Exception);
   }
 
   SECTION("valid handle")
   {
-    File f(std::wstring(),true);
-
-    REQUIRE(f);
-    REQUIRE(f.lastError() == 0);
+    REQUIRE_NOTHROW(File(std::wstring(),true));
   }
 }
 

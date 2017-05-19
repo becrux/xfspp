@@ -17,6 +17,7 @@ TEST_CASE("Environment", "[Win32]")
 {
   SECTION("initialize")
   {
+    REQUIRE_NOTHROW(Manager::instance());
     REQUIRE(Manager::instance().has(L"PATH"));
     REQUIRE(Manager::instance().has(L"path"));
     REQUIRE(!Manager::instance().get(L"path").empty());

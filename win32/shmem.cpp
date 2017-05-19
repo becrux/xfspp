@@ -23,6 +23,9 @@ BaseRawSharedMemory::BaseRawSharedMemory(DWORD dwSize, const std::wstring &sName
   _size(dwSize),
   _ptr(MapViewOfFileEx(handle(),FILE_MAP_ALL_ACCESS,0,0,0,NULL))
 {
+  if (_ptr == NULL)
+    throw Exception();
+
   ::Log::Method m(__SIGNATURE__,WSTRING(L"sName = " << sName));
 }
 

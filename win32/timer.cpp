@@ -12,18 +12,28 @@
 using namespace Windows;
 
 Timer::Timer(DWORD timeout, std::function< void () > f) :
-  Handle<>(NULL,nullCloseHandle),
+  Handle<>(),
   _thread([this, timeout, f] ()
     {
       ::Log::Method m(__LAMBDA_FUNCSIG__("Timer"),STRING("timeout = " << timeout));
 
-      if (WaitForSingleObjectEx(_cancelEvent.handle(),timeout,FALSE) == WAIT_TIMEOUT)
-        f();
+      switch (WaitForSingleObjectEx(_cancelEvent.handle(), timeout, FALSE))
+      {
+        case WAIT_FAILED:
+          throw Exception();
+
+        case WAIT_TIMEOUT:
+          f();
+          break;
+
+        default:
+          break;
+      }
     })
 {
   ::Log::Method(__SIGNATURE__,STRING("timeout = " << timeout));
 
-  setHandle(_thread.handle());
+  setHandle(_thread.handle(),nullCloseHandle);
 }
 
 Timer::~Timer()

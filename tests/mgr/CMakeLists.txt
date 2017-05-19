@@ -5,6 +5,7 @@ ADD_XFSPP_TEST(tests_mgr_startup
     ../../win32/synch.cpp
     ../../win32/registry.cpp
     ../../win32/environment.cpp
+    ../../win32/exception.cpp
     ../../log/log.cpp
     ../../common/version.cpp
     ../../util/string.cpp

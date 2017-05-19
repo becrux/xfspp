@@ -36,7 +36,10 @@ void Thread::join()
     return;
 
   if (handle())
-    WaitForSingleObjectEx(handle(),INFINITE,FALSE);
+  {
+    if (WaitForSingleObjectEx(handle(),INFINITE,FALSE) == WAIT_FAILED)
+      throw Exception();
+  }
 
   _joined = true;
 }

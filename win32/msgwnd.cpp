@@ -49,16 +49,16 @@ void MsgWnd::start()
       wx.lpszClassName = uuidStr.c_str();
       wx.hInstance = _hInstance;
 
-      if (!RegisterClassEx(&wx))
       {
-        sem.release();
-        return;
+        MethodScope semScope([&sem] () { sem.release(); } );
+
+        if (!RegisterClassEx(&wx))
+          throw Exception();
+  
+        if ((_hWnd = CreateWindowEx(0,uuidStr.c_str(),NULL,0,0,0,0,0,HWND_MESSAGE,NULL,_hInstance,
+                                    reinterpret_cast< LPVOID >(this))) == NULL)
+          throw Exception();
       }
-
-      _hWnd = CreateWindowEx(0,uuidStr.c_str(),NULL,0,0,0,0,0,HWND_MESSAGE,NULL,_hInstance,
-                             reinterpret_cast< LPVOID >(this));
-
-      sem.release();
 
       MethodScope classScope([this, uuidStr] () { UnregisterClass(uuidStr.c_str(),_hInstance); });
 
@@ -70,7 +70,7 @@ void MsgWnd::start()
         while ((bRet = GetMessage(&msg,NULL,0,0)) != 0)
         {
           if (bRet == -1)
-            return;
+            throw Exception();
           else
           {
             TranslateMessage(&msg);
@@ -86,7 +86,8 @@ void MsgWnd::start()
 void MsgWnd::close()
 {
   _closing = true;
-  PostMessage(handle(),WM_CLOSE,0,0);
+  if (!PostMessage(handle(),WM_CLOSE,0,0))
+    throw Exception();
 }
 
 LRESULT CALLBACK MsgWnd::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -94,7 +95,10 @@ LRESULT CALLBACK MsgWnd::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
   switch (uMsg)
   {
     case WM_NCCREATE:
+      SetLastError(0);
       SetWindowLongPtr(hWnd,GWLP_USERDATA,reinterpret_cast< LONG_PTR >(reinterpret_cast< LPCREATESTRUCT >(lParam)->lpCreateParams));
+      if (GetLastError())
+        throw Exception();
       break;
 
     case WM_CLOSE:
@@ -103,7 +107,9 @@ LRESULT CALLBACK MsgWnd::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 
         if (me && me->_closing)
         {
-          DestroyWindow(hWnd);
+          if (!DestroyWindow(hWnd))
+            throw Exception();
+
           return 0;
         }
       }

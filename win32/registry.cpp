@@ -13,38 +13,42 @@
 using namespace Windows::Registry;
 
 Key::Key(const std::wstring &sPath, bool create) :
-  Handle< HKEY,LSTATUS,LONG >(NULL,RegCloseKey),
-  _disposition(0)
+  Handle< HKEY,LSTATUS >(openKey(sPath,HKEY_CURRENT_USER,create,_disposition),RegCloseKey)
 {
-  init(sPath,HKEY_CURRENT_USER,create);
+
 }
 
 Key::Key(const std::wstring &sPath, HKEY rootKey, bool create) :
-  Handle< HKEY,LSTATUS,LONG >(NULL,RegCloseKey),
-  _disposition(0)
+  Handle< HKEY,LSTATUS >(openKey(sPath,rootKey,create,_disposition),RegCloseKey)
 {
-  init(sPath,rootKey,create);
+
 }
 
-void Key::init(const std::wstring &sPath, HKEY rootKey, bool create)
+HKEY Key::openKey(const std::wstring &sPath, HKEY rootKey, bool create, DWORD &dwDisposition)
 {
   HKEY hKey;
   LONG err = ERROR_SUCCESS;
 
   if (create)
   {
-    if ((err = RegCreateKeyEx(rootKey,sPath.c_str(),0,NULL,REG_OPTION_NON_VOLATILE,KEY_ALL_ACCESS,NULL,&hKey,&_disposition)) != ERROR_SUCCESS)
+    if ((err = RegCreateKeyEx(rootKey,sPath.c_str(),0,NULL,REG_OPTION_NON_VOLATILE,KEY_ALL_ACCESS,NULL,&hKey,&dwDisposition)) != ERROR_SUCCESS)
+    {
+      SetLastError(static_cast< DWORD >(err));
       hKey = NULL;
+    }
   }
   else
   {
     if ((err = RegOpenKeyEx(rootKey,sPath.c_str(),0,KEY_ALL_ACCESS,&hKey)) != ERROR_SUCCESS)
+    {
+      SetLastError(static_cast< DWORD >(err));
       hKey = NULL;
+    }
 
-    _disposition = REG_OPENED_EXISTING_KEY;
+    dwDisposition = REG_OPENED_EXISTING_KEY;
   }
 
-  setHandle(hKey,err);
+  return hKey;
 }
 
 DWORD Key::disposition() const
@@ -52,32 +56,57 @@ DWORD Key::disposition() const
   return _disposition;
 }
 
-Windows::Error< LRESULT > Key::remove(const std::wstring &sSubPath)
+void Key::remove(const std::wstring &sSubPath)
 {
-  return Error< LRESULT >(RegDeleteKeyEx(handle(),sSubPath.c_str(),0,0));
+  LONG err;
+
+  if ((err = RegDeleteKeyEx(handle(),sSubPath.c_str(),0,0)) != ERROR_SUCCESS)
+  {
+    SetLastError(static_cast< DWORD >(err));
+    throw Exception();
+  }
 }
 
-Windows::Error< LRESULT > Key::removeValue(const std::wstring &sValueName)
+void Key::removeValue(const std::wstring &sValueName)
 {
-  return Error< LRESULT >(RegDeleteValue(handle(), sValueName.c_str()));
+  LONG err;
+
+  if ((err = RegDeleteValue(handle(), sValueName.c_str())) != ERROR_SUCCESS)
+  {
+    SetLastError(static_cast< DWORD >(err));
+    throw Exception();
+  }
 }
 
 std::vector< std::wstring > Key::subKeys() const
 {
   std::vector< std::wstring > res;
 
-  TCHAR buf[1];
+  LONG err;
 
-  DWORD idx = 0;
-  DWORD bufSize = 0;
-  while (RegEnumKeyEx(handle(),idx,buf,&bufSize,NULL,NULL,NULL,NULL) == ERROR_MORE_DATA)
+  DWORD items = 0;
+  DWORD maxSubKeyLen = 0;
+  if ((err = RegQueryInfoKey(handle(),NULL,NULL,NULL,&items,&maxSubKeyLen,NULL,NULL,NULL,NULL,NULL,NULL)) != ERROR_SUCCESS)
   {
-    std::wstring item(bufSize,L'\0');
+    SetLastError(static_cast< DWORD >(err));
+    throw Exception();
+  }
 
-    RegEnumKeyEx(handle(),idx++,const_cast< LPWSTR >(item.c_str()),&bufSize,NULL,NULL,NULL,NULL);
+  for (DWORD i = 0; i < items; ++i)
+  {
+    std::wstring item(maxSubKeyLen + 1,L'\0');
+
+    DWORD bufSize = maxSubKeyLen + 1;
+
+    if ((err = RegEnumKeyEx(handle(),i,const_cast< LPWSTR >(item.c_str()),&bufSize,NULL,NULL,NULL,NULL)) != ERROR_SUCCESS)
+    {
+      SetLastError(static_cast< DWORD >(err));
+      throw Exception();
+    }
+
+    item.resize(bufSize);
 
     res.emplace_back(item);
-    bufSize = 0;
   }
 
   return res;
@@ -87,22 +116,35 @@ std::map< std::wstring,std::tuple< DWORD,std::vector< BYTE > > > Key::values() c
 {
   std::map< std::wstring,std::tuple< DWORD,std::vector< BYTE > > > res;
 
-  TCHAR buf[1];
-  BYTE valueBuf[1];
+  DWORD type;
+  LONG err;
 
-  DWORD idx = 0;
-  DWORD bufSize = 0;
-  DWORD valueBufSize = 0;
-  DWORD type = 0;
-  while (RegEnumValue(handle(),idx,buf,&bufSize,NULL,&type,valueBuf,&valueBufSize) == ERROR_MORE_DATA)
+  DWORD items = 0;
+  DWORD maxValueNameLen = 0;
+  DWORD maxValueLen = 0;
+  if ((err = RegQueryInfoKey(handle(),NULL,NULL,NULL,NULL,NULL,NULL,&items,&maxValueNameLen,&maxValueLen,NULL,NULL)) != ERROR_SUCCESS)
   {
+    SetLastError(static_cast< DWORD >(err));
+    throw Exception();
+  }
+
+  for (DWORD i = 0; i < items; ++i)
+  {
+    type = 0;
+    
+    DWORD bufSize = maxValueNameLen + 1;
+    DWORD valueBufSize = maxValueLen + 1;
+   
     std::wstring vName(bufSize,L'\0');
     std::vector< BYTE > v(valueBufSize,0);
 
-    RegEnumValue(handle(),idx++,const_cast<LPWSTR>(vName.c_str()),&bufSize,NULL,&type,v.data(),&valueBufSize);
+    if ((err = RegEnumValue(handle(),i,const_cast<LPWSTR>(vName.c_str()),&bufSize,NULL,&type,v.data(),&valueBufSize)) != ERROR_SUCCESS)
+    {
+      SetLastError(static_cast< DWORD >(err));
+      throw Exception();
+    }
 
     res.emplace(vName,std::make_tuple(type,v));
-    bufSize = valueBufSize = 0;
   }
 
   return res;
@@ -114,8 +156,17 @@ std::wstring Key::value(const std::wstring &sValueName, const std::wstring &defa
   DWORD bufSize = 1024 * sizeof(TCHAR);
 
   clearMem(buf);
-  if (RegGetValue(handle(),L"",sValueName.c_str(),RRF_RT_REG_SZ | RRF_NOEXPAND,NULL,buf,&bufSize) != ERROR_SUCCESS)
-    return defaultValue;
+  LONG err;
+  if ((err = RegGetValue(handle(),L"",sValueName.c_str(),RRF_RT_REG_SZ | RRF_NOEXPAND,NULL,buf,&bufSize)) != ERROR_SUCCESS)
+  {
+    if (err == ERROR_FILE_NOT_FOUND)
+      return defaultValue;
+    else
+    {
+      SetLastError(static_cast< DWORD >(err));
+      throw Exception();
+    }
+  }
 
   return std::wstring(buf);
 }
@@ -125,13 +176,18 @@ std::string Key::value(const std::wstring &sValueName,const std::string &default
   return convertTo(value(sValueName,convertTo(defaultValue)));
 }
 
-Windows::Error< LRESULT > Key::setValue(const std::wstring &sValueName,const std::wstring &tValue)
+void Key::setValue(const std::wstring &sValueName,const std::wstring &tValue)
 {
-  return Error< LRESULT >(
-    RegSetValueEx(handle(),sValueName.c_str(),0,REG_SZ,reinterpret_cast< const BYTE * >(tValue.c_str()),tValue.size() * sizeof(wchar_t)));
+  LONG err;
+
+  if ((err = RegSetValueEx(handle(),sValueName.c_str(),0,REG_SZ,reinterpret_cast< const BYTE * >(tValue.c_str()),tValue.size() * sizeof(wchar_t))) != ERROR_SUCCESS)
+  {
+    SetLastError(static_cast< DWORD >(err));
+    throw Exception();
+  }
 }
 
-Windows::Error< LRESULT > Key::setValue(const std::wstring &sValueName, const std::string &tValue)
+void Key::setValue(const std::wstring &sValueName, const std::string &tValue)
 {
   return setValue(sValueName,convertTo(tValue));
 }

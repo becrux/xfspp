@@ -14,44 +14,40 @@
 
 #include "win32/error.hpp"
 #include "util/constraints.hpp"
+#include "win32/exception.hpp"
 
 namespace Windows
 {
   inline BOOL __stdcall nullCloseHandle(HANDLE) { return TRUE; }
 
-  template< typename T = HANDLE, typename R = BOOL, typename E = DWORD >
+  template< typename T = HANDLE, typename R = BOOL >
   class Handle
   {
     NON_COPYABLE(Handle);
 
     T _h;
-    Error< E > _lastError;
     R ((__stdcall *_closeF))(T);
 
-    void setLastError()
-    {
-      _lastError = ((_h == NULL) || (_h == INVALID_HANDLE_VALUE))? Error< E >() : Error< E >(ERROR_SUCCESS);
-    }
-
   protected:
-    void setHandle(T h, E errorValue)
+    void setHandle(T h, R ((__stdcall *closeF))(T) = CloseHandle)
     {
       _h = h;
-      _lastError = Error< E >(errorValue);
+      _closeF = closeF;
+
+      if ((_h == NULL) || (_h == INVALID_HANDLE_VALUE))
+        throw Exception();
     }
 
-    void setHandle(T h)
+    explicit Handle(T h, R ((__stdcall *closeF))(T) = CloseHandle)
     {
-      _h = h;
-      setLastError();
+      setHandle(h,closeF);
     }
 
-    explicit Handle(T h = NULL,
-                    R ((__stdcall *closeF))(T) = CloseHandle) :
-      _h(h),
-      _closeF(closeF)
+    explicit Handle() :
+      _h(NULL),
+      _closeF(NULL)
     {
-      setLastError();
+
     }
 
   public:
@@ -61,12 +57,11 @@ namespace Windows
     {
       _closeF = o._closeF;
       o._h = NULL;
-      o._lastError = ERROR_SUCCESS;
     }
 
     ~Handle()
     {
-      if (_h != NULL)
+      if (_h != NULL && _closeF != NULL)
       {
         _closeF(_h);
         _h = NULL;
@@ -78,18 +73,11 @@ namespace Windows
       return _h;
     }
 
-    Error< E > lastError() const
-    {
-      return _lastError;
-    }
-
     Handle &operator=(Handle &&o)
     {
       _h = o._h;
-      _lastError = o._lastError;
       _closeF = o._closeF;
       o._h = NULL;
-      o._lastError = ERROR_SUCCESS;
 
       return *this;
     }

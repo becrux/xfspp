@@ -5,6 +5,7 @@ set(SOURCES
   ../win32/timer.cpp
   ../win32/registry.cpp
   ../win32/environment.cpp
+  ../win32/exception.cpp
   ../log/log.cpp
   ../util/string.cpp
   dispatcher.cpp

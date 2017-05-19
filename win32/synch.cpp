@@ -18,7 +18,8 @@ Lockable::Lockable(HANDLE h) :
 
 void Lockable::lock()
 {
-  WaitForSingleObjectEx(handle(),INFINITE,FALSE);
+  if (WaitForSingleObjectEx(handle(),INFINITE,FALSE) == WAIT_FAILED)
+    throw Exception();
 }
 
 Mutex::Mutex(const std::wstring &sName) :
@@ -29,7 +30,8 @@ Mutex::Mutex(const std::wstring &sName) :
 
 void Mutex::unlock()
 {
-  ReleaseMutex(handle());
+  if (!ReleaseMutex(handle()))
+    throw Exception();
 }
 
 Semaphore::Semaphore(LONG start, LONG max, const std::wstring &sName) :
@@ -40,12 +42,14 @@ Semaphore::Semaphore(LONG start, LONG max, const std::wstring &sName) :
 
 void Semaphore::acquire()
 {
-  WaitForSingleObjectEx(handle(),INFINITE,FALSE);
+  if (WaitForSingleObjectEx(handle(),INFINITE,FALSE) == WAIT_FAILED)
+    throw Exception();
 }
 
 void Semaphore::release()
 {
-  ReleaseSemaphore(handle(),1,NULL);
+  if (!ReleaseSemaphore(handle(),1,NULL))
+    throw Exception();
 }
 
 Event::Event(const std::wstring &sName) :
@@ -56,10 +60,12 @@ Event::Event(const std::wstring &sName) :
 
 void Event::waitFor()
 {
-  WaitForSingleObjectEx(handle(),INFINITE,FALSE);
+  if (WaitForSingleObjectEx(handle(),INFINITE,FALSE) == WAIT_FAILED)
+    throw Exception();
 }
 
 void Event::set()
 {
-  SetEvent(handle());
+  if (!SetEvent(handle()))
+    throw Exception();
 }

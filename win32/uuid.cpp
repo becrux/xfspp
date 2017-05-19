@@ -8,26 +8,46 @@
 
 #include "win32/uuid.hpp"
 #include "util/methodscope.hpp"
+#include "win32/exception.hpp"
 
 using namespace Windows;
 
 Uuid::Uuid()
 {
-  UuidCreateNil(&_uuid);
-  UuidCreate(&_uuid);
+  RPC_STATUS res;
+
+  if ((res = UuidCreateNil(&_uuid)) != RPC_S_OK)
+  {
+    SetLastError(static_cast< DWORD >(res));
+    throw Exception();
+  }
+
+  if ((res = UuidCreate(&_uuid)) != RPC_S_OK)
+  {
+    SetLastError(static_cast< DWORD >(res));
+    throw Exception();
+  }
 }
 
 std::wstring Uuid::value(const std::wstring &sPrefix) const
 {
-  RPC_WSTR sUuid;
+  RPC_WSTR sUuid = NULL;
 
   MethodScope m([&sUuid] () { RpcStringFree(&sUuid); });
 
-#if defined(__GNUC__)
-  UuidToString(const_cast< UUID * >(&_uuid),&sUuid);
-#else
-  UuidToString(&_uuid,&sUuid);
-#endif
+  RPC_STATUS res;
+  if ((res =
+
+  #if defined(__GNUC__)
+    UuidToString(const_cast<UUID *>(&_uuid), &sUuid)
+  #else
+    UuidToString(&_uuid, &sUuid)
+  #endif
+    ) != RPC_S_OK)
+  {
+    SetLastError(static_cast< DWORD >(res));
+    throw Exception();
+  }
 
   return sPrefix + std::wstring(reinterpret_cast< wchar_t * >(sUuid));
 }

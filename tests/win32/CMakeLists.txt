@@ -2,6 +2,8 @@ ADD_XFSPP_TEST(tests_win32_handle
   SOURCES
     handle.cpp
     ../../win32/filesystem.cpp
+    ../../win32/exception.cpp
+    ../../util/string.cpp
 
   LIBS
     shlwapi
@@ -14,6 +16,7 @@ ADD_XFSPP_TEST(tests_win32_synch
     ../../win32/thread.cpp
     ../../win32/environment.cpp
     ../../win32/registry.cpp
+    ../../win32/exception.cpp
     ../../log/log.cpp
     ../../util/string.cpp
 
@@ -27,6 +30,7 @@ ADD_XFSPP_TEST(tests_win32_thread
     ../../win32/thread.cpp
     ../../win32/environment.cpp
     ../../win32/registry.cpp
+    ../../win32/exception.cpp
     ../../log/log.cpp
     ../../util/string.cpp
 
@@ -42,6 +46,7 @@ ADD_XFSPP_TEST(tests_win32_timer
     ../../win32/synch.cpp
     ../../win32/environment.cpp
     ../../win32/registry.cpp
+    ../../win32/exception.cpp
     ../../log/log.cpp
     ../../util/string.cpp
 
@@ -53,8 +58,11 @@ ADD_XFSPP_TEST(tests_win32_uuid
   SOURCES
     uuid.cpp
     ../../win32/uuid.cpp
+    ../../win32/exception.cpp
+    ../../util/string.cpp
 
   LIBS
+    shlwapi
     rpcrt4
 )
 
@@ -64,6 +72,7 @@ ADD_XFSPP_TEST(tests_win32_library
     ../../win32/library.cpp
     ../../win32/environment.cpp
     ../../win32/registry.cpp
+    ../../win32/exception.cpp
     ../../log/log.cpp
     ../../util/string.cpp
 
@@ -79,6 +88,7 @@ ADD_XFSPP_TEST(tests_win32_shared_memory
     ../../win32/uuid.cpp
     ../../win32/environment.cpp
     ../../win32/registry.cpp
+    ../../win32/exception.cpp
     ../../log/log.cpp
     ../../util/string.cpp
 
@@ -92,6 +102,7 @@ ADD_XFSPP_TEST(tests_win32_registry
     registry.cpp
     ../../win32/registry.cpp
     ../../win32/environment.cpp
+    ../../win32/exception.cpp
     ../../log/log.cpp
     ../../util/string.cpp
 
@@ -103,6 +114,7 @@ ADD_XFSPP_TEST(tests_win32_environment
   SOURCES
     environment.cpp
     ../../win32/environment.cpp
+    ../../win32/exception.cpp
     ../../util/string.cpp
 
   LIBS
@@ -118,6 +130,7 @@ ADD_XFSPP_TEST(tests_win32_window
     ../../win32/thread.cpp
     ../../win32/environment.cpp
     ../../win32/registry.cpp
+    ../../win32/exception.cpp
     ../../log/log.cpp
     ../../util/string.cpp
 
