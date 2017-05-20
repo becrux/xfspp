@@ -51,7 +51,7 @@ std::ostream &Logger::streamInstance()
 {
   static bool canLog = isLogEnabled();
 
-  return (isLogEnabled)? getFileStreamInstance() : getNullStreamInstance();
+  return (canLog)? getFileStreamInstance() : getNullStreamInstance();
 }
 
 Logger::Logger()

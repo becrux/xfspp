@@ -18,7 +18,7 @@ std::string convertTo(const std::wstring &s)
   if (!nd)
     throw Windows::Exception();
 
-  std::string res(nd,'\0');
+  std::string res(static_cast< std::string::size_type >(nd),'\0');
 
   if (!WideCharToMultiByte(CP_UTF8,0,s.c_str(),-1,const_cast< LPSTR >(res.data()),nd,NULL,NULL))
     throw Windows::Exception();
@@ -34,7 +34,7 @@ std::wstring convertTo(const std::string &s)
   if (!nd)
     throw Windows::Exception();
 
-  std::wstring res(nd,L'\0');
+  std::wstring res(static_cast< std::string::size_type >(nd),L'\0');
 
   if (!MultiByteToWideChar(CP_UTF8,0,s.c_str(),-1,const_cast< LPWSTR >(res.data()),nd))
     throw Windows::Exception();
