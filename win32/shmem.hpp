@@ -66,9 +66,9 @@ namespace Windows
 
     void access(std::function< void(T *) > f)
     {
-      BaseRawSharedMemory::access([f] (DWORD size, LPVOID ptr)
+      BaseRawSharedMemory::access([f] (DWORD, LPVOID ptr)
         {
-          f(reinterpret_cast< T * >(size,ptr));
+          f(reinterpret_cast< T * >(ptr));
         });
     }
   };
