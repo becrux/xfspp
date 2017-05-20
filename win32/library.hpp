@@ -29,11 +29,11 @@ namespace Windows
     template< typename R, typename... Args >
     R call(LPCSTR funcName, Args... args)
     {
-      void *f = reinterpret_cast< void * >(GetProcAddress(handle(),funcName));
+      auto f = reinterpret_cast< R (__stdcall *)(Args...) >(GetProcAddress(handle(),funcName));
       if (f == NULL)
         throw Exception();
 
-      return reinterpret_cast< R (__stdcall *)(Args...) >(f)(args...);
+      return f(args...);
     }
   };
 }
