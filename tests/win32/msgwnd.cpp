@@ -49,7 +49,7 @@ TEST_CASE("Message window", "[Win32]")
       REQUIRE(flag);
     }
 
-    REQUIRE(PostMessage(hWnd,WM_USER + 1,NULL,NULL) == 0);
+    REQUIRE(PostMessage(hWnd,WM_USER + 1,0,0) == 0);
   }
 }
 

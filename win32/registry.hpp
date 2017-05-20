@@ -47,15 +47,10 @@ namespace Windows
       template< typename T >
       T value(const std::wstring &sValueName, const T &defaultValue = T()) const
       {
-        static_assert(!std::is_same< T,std::string >::value,"Cannot be called with std::string type");
-        static_assert(!std::is_same< T,std::wstring >::value,"Cannot be called with std::wstring type");
+        DWORD bufSize = 0;
 
-        TCHAR buf[1024];
-        DWORD bufSize = 1024 * sizeof(TCHAR);
-
-        clearMem(buf);
         LONG err;
-        if ((err = RegGetValue(handle(),L"",sValueName.c_str(),RRF_RT_REG_SZ | RRF_NOEXPAND,NULL,buf,&bufSize)) != ERROR_SUCCESS)
+        if ((err = RegGetValue(handle(),L"",sValueName.c_str(),RRF_RT_REG_SZ | RRF_NOEXPAND,NULL,NULL,&bufSize)) != ERROR_SUCCESS)
         {
           if (err == ERROR_FILE_NOT_FOUND)
             return defaultValue;
@@ -66,15 +61,21 @@ namespace Windows
           }
         }
 
+        std::wstring buf(bufSize / 2,L'\0');
+        PVOID pBuf = const_cast< PVOID >(reinterpret_cast< const void * >(buf.data()));
+
+        if ((err = RegGetValue(handle(),L"",sValueName.c_str(),RRF_RT_REG_SZ | RRF_NOEXPAND,NULL,pBuf,&bufSize)) != ERROR_SUCCESS)
+        {
+          SetLastError(static_cast< DWORD >(err));
+          throw Exception();
+        }
+
         T res;
-        std::wistringstream iss{ std::wstring(buf,buf + bufSize) };
+        std::wistringstream iss{ buf };
         iss >> res;
 
         return res;
       }
-
-      std::wstring value(const std::wstring &sValueName, const std::wstring &defaultValue) const;
-      std::string value(const std::wstring &sValueName,const std::string &defaultValue) const;
 
       void remove(const std::wstring &sSubPath);
       void removeValue(const std::wstring &sValueName);
@@ -82,9 +83,6 @@ namespace Windows
       template< typename T >
       void setValue(const std::wstring &sValueName, const T &tValue)
       {
-        static_assert(!std::is_same< T,std::string >::value,"Cannot be called with std::string type");
-        static_assert(!std::is_same< T,std::wstring >::value,"Cannot be called with std::wstring type");
-
         std::wostringstream oss;
 
         oss << tValue;
@@ -92,16 +90,18 @@ namespace Windows
         std::wstring vs(oss.str());
 
         LONG err;
-        if ((err = RegSetValueEx(handle(), sValueName.c_str(), 0, REG_SZ, reinterpret_cast<const BYTE *>(vs.c_str()), vs.size() * sizeof(wchar_t))) != ERROR_SUCCESS)
+        if ((err = RegSetValueEx(handle(),sValueName.c_str(),0,REG_SZ,reinterpret_cast< const BYTE * >(vs.c_str()),(vs.size() + 1) * sizeof(wchar_t))) != ERROR_SUCCESS)
         {
           SetLastError(static_cast< DWORD >(err));
           throw Exception();
         }
       }
-
-      void setValue(const std::wstring &sValueName, const std::wstring &tValue);
-      void setValue(const std::wstring &sValueName, const std::string &tValue);
     };
+
+    template<> std::string Key::value< std::string >(const std::wstring &sValueName, const std::string &defaultValue) const;
+    template<> std::wstring Key::value< std::wstring >(const std::wstring &sValueName, const std::wstring &defaultValue) const;
+    template<> void Key::setValue< std::string >(const std::wstring &sValueName, const std::string &tValue);
+    template<> void Key::setValue< std::wstring >(const std::wstring &sValueName, const std::wstring &tValue);
   }
 }
 

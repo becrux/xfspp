@@ -150,14 +150,12 @@ std::map< std::wstring,std::tuple< DWORD,std::vector< BYTE > > > Key::values() c
   return res;
 }
 
-std::wstring Key::value(const std::wstring &sValueName, const std::wstring &defaultValue) const
+template<>
+std::wstring Key::value< std::wstring >(const std::wstring &sValueName, const std::wstring &defaultValue) const
 {
-  TCHAR buf[1024];
-  DWORD bufSize = 1024 * sizeof(TCHAR);
-
-  clearMem(buf);
+  DWORD bufSize = 0;
   LONG err;
-  if ((err = RegGetValue(handle(),L"",sValueName.c_str(),RRF_RT_REG_SZ | RRF_NOEXPAND,NULL,buf,&bufSize)) != ERROR_SUCCESS)
+  if ((err = RegGetValue(handle(),L"",sValueName.c_str(),RRF_RT_REG_SZ | RRF_NOEXPAND,NULL,NULL,&bufSize)) != ERROR_SUCCESS)
   {
     if (err == ERROR_FILE_NOT_FOUND)
       return defaultValue;
@@ -168,26 +166,39 @@ std::wstring Key::value(const std::wstring &sValueName, const std::wstring &defa
     }
   }
 
-  return std::wstring(buf);
+  std::wstring res(bufSize / 2,L'\0');
+  PVOID buf = const_cast< PVOID >(reinterpret_cast< const void * >(res.data()));
+  if ((err = RegGetValue(handle(),L"",sValueName.c_str(),RRF_RT_REG_SZ | RRF_NOEXPAND,NULL,buf,&bufSize)) != ERROR_SUCCESS)
+  {
+    SetLastError(static_cast< DWORD >(err));
+    throw Exception();
+  }
+
+  res.resize(res.size() - 2);
+
+  return res;
 }
 
-std::string Key::value(const std::wstring &sValueName,const std::string &defaultValue) const
+template<>
+std::string Key::value< std::string >(const std::wstring &sValueName,const std::string &defaultValue) const
 {
   return convertTo(value(sValueName,convertTo(defaultValue)));
 }
 
-void Key::setValue(const std::wstring &sValueName,const std::wstring &tValue)
+template<>
+void Key::setValue< std::wstring >(const std::wstring &sValueName,const std::wstring &tValue)
 {
   LONG err;
 
-  if ((err = RegSetValueEx(handle(),sValueName.c_str(),0,REG_SZ,reinterpret_cast< const BYTE * >(tValue.c_str()),tValue.size() * sizeof(wchar_t))) != ERROR_SUCCESS)
+  if ((err = RegSetValueEx(handle(),sValueName.c_str(),0,REG_SZ,reinterpret_cast< const BYTE * >(tValue.c_str()),(tValue.size() + 1) * sizeof(wchar_t))) != ERROR_SUCCESS)
   {
     SetLastError(static_cast< DWORD >(err));
     throw Exception();
   }
 }
 
-void Key::setValue(const std::wstring &sValueName, const std::string &tValue)
+template<>
+void Key::setValue< std::string >(const std::wstring &sValueName, const std::string &tValue)
 {
   return setValue(sValueName,convertTo(tValue));
 }

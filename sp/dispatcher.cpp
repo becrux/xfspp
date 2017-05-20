@@ -55,7 +55,7 @@ void Dispatcher::TaskHelper::run()
 
   _thread.reset(new Windows::Thread([this] ()
     {
-      ::Log::Method m(__LAMBDA_FUNCSIG__("TaskHelper::run"),STRING("id = " << id()));
+      ::Log::Method im(__LAMBDA_FUNCSIG__("TaskHelper::run"),STRING("id = " << id()));
 
       (*_taskRef)(id());
       _completionEventCallback(CompletionEvent::Completed,id());
@@ -136,43 +136,43 @@ void Dispatcher::post(DWORD id, DWORD timeout, const std::shared_ptr< ITask > &t
       return;
 
     std::shared_ptr< TaskHelper > th = std::make_shared< TaskHelper >(id,timeout,task,
-      [this] (TaskHelper::CompletionEvent event, DWORD id)
+      [this] (TaskHelper::CompletionEvent event, DWORD dwId)
         {
           std::shared_ptr< TaskHelper > sp1, sp2;
 
-          ::Log::Method m(__LAMBDA_FUNCSIG__("Taskhelper::completionChange"),STRING("id = " << id << ", event = " << event));
+          ::Log::Method im(__LAMBDA_FUNCSIG__("Taskhelper::completionChange"),STRING("dwId = " << dwId << ", event = " << event));
 
           MutexLocker inLocker(_mutex);
 
-          auto it = _queuedTasks.find(id);
+          auto it = _queuedTasks.find(dwId);
 
           if (it != _queuedTasks.cend())
           {
-            if ((_runningTasks.find(id) != _runningTasks.cend()) &&
+            if ((_runningTasks.find(dwId) != _runningTasks.cend()) &&
                 (event != TaskHelper::CompletionEvent::Completed))
             {
-              Log::Logger() << "moving " << id << " to backup queue";
-              _notQueuedTasks.emplace(id,it->second);
+              Log::Logger() << "moving " << dwId << " to backup queue";
+              _notQueuedTasks.emplace(dwId,it->second);
             }
 
-            Log::Logger() << "removing " << id << " from primary queue";
+            Log::Logger() << "removing " << dwId << " from primary queue";
             sp1 = it->second;
             _queuedTasks.erase(it);
           }
 
           if (event == TaskHelper::CompletionEvent::Completed)
           {
-            auto nit = _notQueuedTasks.find(id);
+            auto nit = _notQueuedTasks.find(dwId);
 
             if (nit != _notQueuedTasks.cend())
             {
-              Log::Logger() << "removing " << id << " from backup queue";
+              Log::Logger() << "removing " << dwId << " from backup queue";
               sp2 = nit->second;
               _notQueuedTasks.erase(nit);
             }
 
-            Log::Logger() << "removing " << id << " from running list";
-            _runningTasks.erase(id);
+            Log::Logger() << "removing " << dwId << " from running list";
+            _runningTasks.erase(dwId);
           }
 
           if (_closing && _notQueuedTasks.empty() && _queuedTasks.empty())
@@ -221,6 +221,9 @@ std::ostream &operator<<(std::ostream &out, Dispatcher::TaskHelper::CompletionEv
 
     case Dispatcher::TaskHelper::CompletionEvent::Completed:
       out << "Completed";
+      break;
+
+    default:
       break;
   }
 

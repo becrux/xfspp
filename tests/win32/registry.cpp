@@ -59,18 +59,18 @@ TEST_CASE("Registry", "[Win32]")
       REQUIRE(k.value< DWORD >(L"ValueName2",0x89ABCDEF) == 0x89ABCDEF);
       REQUIRE(k.values().size() == 1);
 
-      k.setValue(L"ValueName","Hello, Registry!");
-      REQUIRE((k.value(L"ValueName","Goodbye!") == "Hello, Registry!"));
+      k.setValue(L"ValueName",std::string("Hello, Registry!"));
+      REQUIRE((k.value(L"ValueName",std::string("Goodbye!")) == "Hello, Registry!"));
 
-      k.setValue(L"ValueName",L"Hello, Wide Registry!");
-      REQUIRE((k.value(L"ValueName",L"Goodbye!") == L"Hello, Wide Registry!"));
+      k.setValue(L"ValueName",std::wstring(L"Hello, Wide Registry!"));
+      REQUIRE((k.value(L"ValueName",std::wstring(L"Goodbye!")) == L"Hello, Wide Registry!"));
 
       k.removeValue(L"ValueName");
       REQUIRE(k.value< DWORD >(L"ValueName",0xDEADBEEF) == 0xDEADBEEF);
       REQUIRE(k.values().empty());
 
-      REQUIRE(k.value(L"ValueName","Test String") == "Test String");
-      REQUIRE(k.value(L"ValueName",L"Test Wide String") == L"Test Wide String");
+      REQUIRE(k.value(L"ValueName",std::string("Test String")) == "Test String");
+      REQUIRE(k.value(L"ValueName",std::wstring(L"Test Wide String")) == L"Test Wide String");
     }
 
     {
@@ -99,7 +99,7 @@ TEST_CASE("Registry", "[Win32]")
 
 extern "C" int wmain(int argc, wchar_t **argv, wchar_t **)
 {
-  RegDeleteKeyEx(HKEY_CURRENT_USER,L"Software\\XFSPP_TEMP",NULL,0);
+  RegDeleteKeyEx(HKEY_CURRENT_USER,L"Software\\XFSPP_TEMP",0,0);
 
   return run(argc,argv);
 }

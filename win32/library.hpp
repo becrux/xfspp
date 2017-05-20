@@ -16,6 +16,11 @@
 #include "win32/handle.hpp"
 #include "util/constraints.hpp"
 
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable: 4191)
+#endif
+
 namespace Windows
 {
   class Library : public Handle< HMODULE >
@@ -37,5 +42,9 @@ namespace Windows
     }
   };
 }
+
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
 
 #endif

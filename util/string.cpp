@@ -23,6 +23,8 @@ std::string convertTo(const std::wstring &s)
   if (!WideCharToMultiByte(CP_UTF8,0,s.c_str(),-1,const_cast< LPSTR >(res.data()),nd,NULL,NULL))
     throw Windows::Exception();
 
+  res.resize(res.size() - 1);
+
   return res;
 }
 
@@ -36,6 +38,8 @@ std::wstring convertTo(const std::string &s)
 
   if (!MultiByteToWideChar(CP_UTF8,0,s.c_str(),-1,const_cast< LPWSTR >(res.data()),nd))
     throw Windows::Exception();
+
+  res.resize(res.size() - 1);
 
   return res;
 }

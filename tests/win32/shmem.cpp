@@ -28,14 +28,14 @@ TEST_CASE("Shared memory", "[Win32]")
     UnmapViewOfFile(p);
     CloseHandle(h);
 
-    sm.access([] (DWORD *p)
+    sm.access([] (DWORD *ptr)
       {
-        *p = 5;
+        *ptr = 5;
       });
 
-    sm.access([](DWORD *p)
+    sm.access([](DWORD *ptr)
       {
-        REQUIRE(*p == 5);
+        REQUIRE(*ptr == 5);
       });
   }
 
@@ -53,15 +53,15 @@ TEST_CASE("Shared memory", "[Win32]")
     UnmapViewOfFile(p);
     CloseHandle(h);
 
-    sm.access([] (DWORD size, LPVOID p)
+    sm.access([] (DWORD size, LPVOID mp)
       {
-        BYTE *ptr = reinterpret_cast< BYTE * >(p);
-        std::iota(ptr,ptr + size,0);
+        BYTE *ptr = reinterpret_cast< BYTE * >(mp);
+        std::iota(ptr,ptr + size,static_cast< BYTE >(0));
       });
 
-    sm.access([] (DWORD size, LPVOID p)
+    sm.access([] (DWORD size, LPVOID mp)
       {
-        BYTE *ptr = reinterpret_cast< BYTE * >(p);
+        BYTE *ptr = reinterpret_cast< BYTE * >(mp);
         REQUIRE(*ptr == 0);
         REQUIRE(*(ptr + size - 1) == 255);
     });
