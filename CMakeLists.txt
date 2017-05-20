@@ -82,14 +82,14 @@ get_cmake_property(_variableNames VARIABLES)
 foreach (_variableName ${_variableNames})
   if ((NOT (_variableName MATCHES "^CMAKE_CXX_COMPILER_ID_PLATFORM_CONTENT$")) AND
       (NOT (_variableName MATCHES "^CMAKE_CXX_COMPILER_PRODUCED_FILES$")) AND
-	  (NOT (_variableName MATCHES "^CMAKE_CXX_COMPILER_PRODUCED_OUTPUT$")) AND
-	  (NOT (_variableName MATCHES "^CMAKE_CXX_COMPILER_ID_TOOL_MATCH_INDEX$")) AND
-	  (NOT (_variableName MATCHES "^CMAKE_CXX_COMPILER_ID_TOOL_MATCH_REGEX$")) AND
-	  (NOT (_variableName MATCHES "^CMAKE_C_COMPILER_ID_PLATFORM_CONTENT$")) AND
+      (NOT (_variableName MATCHES "^CMAKE_CXX_COMPILER_PRODUCED_OUTPUT$")) AND
+      (NOT (_variableName MATCHES "^CMAKE_CXX_COMPILER_ID_TOOL_MATCH_INDEX$")) AND
+      (NOT (_variableName MATCHES "^CMAKE_CXX_COMPILER_ID_TOOL_MATCH_REGEX$")) AND
+      (NOT (_variableName MATCHES "^CMAKE_C_COMPILER_ID_PLATFORM_CONTENT$")) AND
       (NOT (_variableName MATCHES "^CMAKE_C_COMPILER_PRODUCED_FILES$")) AND
-	  (NOT (_variableName MATCHES "^CMAKE_C_COMPILER_PRODUCED_OUTPUT$")) AND
-	  (NOT (_variableName MATCHES "^CMAKE_C_COMPILER_ID_TOOL_MATCH_INDEX$")) AND
-	  (NOT (_variableName MATCHES "^CMAKE_C_COMPILER_ID_TOOL_MATCH_REGEX$")))
+      (NOT (_variableName MATCHES "^CMAKE_C_COMPILER_PRODUCED_OUTPUT$")) AND
+      (NOT (_variableName MATCHES "^CMAKE_C_COMPILER_ID_TOOL_MATCH_INDEX$")) AND
+      (NOT (_variableName MATCHES "^CMAKE_C_COMPILER_ID_TOOL_MATCH_REGEX$")))
     message(STATUS "${_variableName}=${${_variableName}}")
   endif()
 endforeach()
@@ -109,10 +109,10 @@ function(ADD_XFSPP_TEST targetName)
   set(libs LIBS)
   set(deps DEPENDS)
   cmake_parse_arguments(PARSED_ARGS "" "" "SOURCES;DEPS;LIBS;TIMEOUT;RUN_WITH_PARAMS" ${ARGN})
-  
+
   add_executable(${targetName}
     EXCLUDE_FROM_ALL
-	${PARSED_ARGS_SOURCES})
+    ${PARSED_ARGS_SOURCES})
 
   if(PARSED_ARGS_LIBS)
     target_link_libraries(${targetName} ${PARSED_ARGS_LIBS})

@@ -16,6 +16,12 @@
 
 using namespace Log;
 
+class NullBuffer : public std::streambuf
+{
+public:
+  int overflow(int c) { return c; }
+};
+
 std::string Logger::getPathFromRegistry()
 {
   return Windows::Registry::Key(L"Software\\xfspp",HKEY_LOCAL_MACHINE).value(L"logFileName",std::string("xfspp_mgr.log"));
@@ -28,21 +34,24 @@ std::ostream &Logger::getFileStreamInstance()
   return f;
 }
 
-std::ostream &Logger::getConsoleStreamInstance()
+std::ostream &Logger::getNullStreamInstance()
 {
-  return std::cout;
+  static NullBuffer nullBuffer;
+  static std::ostream nullStream(&nullBuffer);
+
+  return nullStream;
 }
 
-bool Logger::isLogOnConsole()
+bool Logger::isLogEnabled()
 {
-  return Windows::Environment::Manager::instance().get(L"XFSPP_LOG_ON_CONSOLE") == L"1";
+  return Windows::Environment::Manager::instance().get(L"XFSPP_NO_LOG") != L"1";
 }
 
 std::ostream &Logger::streamInstance()
 {
-  static bool onConsole = isLogOnConsole();
+  static bool canLog = isLogEnabled();
 
-  return (onConsole)? getConsoleStreamInstance() : getFileStreamInstance();
+  return (isLogEnabled)? getFileStreamInstance() : getNullStreamInstance();
 }
 
 Logger::Logger()

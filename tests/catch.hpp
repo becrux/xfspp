@@ -19,7 +19,7 @@
 
 int run(int argc, wchar_t **argv, std::function< void (const std::wstring &) > initLibF = std::function< void (const std::wstring &) >())
 {
-  SetEnvironmentVariable(L"XFSPP_LOG_ON_CONSOLE",L"1");
+  SetEnvironmentVariable(L"XFSPP_NO_LOG",L"1");
 
   for (int i = 0; i < argc; ++i)
 	  if (std::wstring(argv[i]) == L"--lib")

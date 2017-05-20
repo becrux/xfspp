@@ -34,9 +34,9 @@ namespace Log
     static std::string getPathFromRegistry();
 
     static std::ostream &getFileStreamInstance();
-    static std::ostream &getConsoleStreamInstance();
+    static std::ostream &getNullStreamInstance();
 
-    static bool isLogOnConsole();
+    static bool isLogEnabled();
 
     NON_COPYABLE(Logger);
 
