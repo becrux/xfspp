@@ -10,6 +10,7 @@
 #ifndef SINGLETON_HPP
 #define SINGLETON_HPP
 
+#include "util/constraints.hpp"
 #include <stdexcept>
 
 template< typename T >
@@ -17,8 +18,8 @@ class Singleton
 {
   static T *_ptr;
   
-  Singleton(const Singleton &) = delete;
-  Singleton(Singleton &&) = delete;
+  NON_COPYABLE(Singleton);
+  NON_MOVEABLE(Singleton);
   
 public:
   template< typename... Args >
@@ -56,6 +57,7 @@ public:
 template< typename T > T *Singleton< T >::_ptr = nullptr;
 
 #define CREATE_INSTANCE(T, ...) Singleton< T >::createInstance(__VA_ARGS__)
+#define DELETE_INSTANCE(T, ...) Singleton< T >::deleteInstance()
 #define INSTANCE(T) Singleton< T >::instance()
 #define HAS_INSTANCE(T) Singleton< T >::hasInstance()
 

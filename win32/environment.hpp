@@ -17,6 +17,7 @@
 
 #include <windows.h>
 #include "util/string.hpp"
+#include "util/singleton.hpp"
 
 namespace Windows
 {
@@ -38,9 +39,9 @@ namespace Windows
 
       friend std::ostream &operator<<(std::ostream &out, const Manager &m);
 
-    public:
-      static Manager &instance();
+      friend class Singleton< Manager >;
 
+    public:
       bool has(const std::wstring &key) const;
 
       std::wstring get(const std::wstring &key, const std::wstring &sDefault = std::wstring()) const;

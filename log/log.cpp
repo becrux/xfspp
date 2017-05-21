@@ -13,6 +13,7 @@
 #include "log/log.hpp"
 #include "win32/registry.hpp"
 #include "win32/environment.hpp"
+#include "util/singleton.hpp"
 
 using namespace Log;
 
@@ -44,7 +45,8 @@ std::ostream &Logger::getNullStreamInstance()
 
 bool Logger::isLogEnabled()
 {
-  return Windows::Environment::Manager::instance().get(L"XFSPP_NO_LOG") != L"1";
+  CREATE_INSTANCE(Windows::Environment::Manager);
+  return INSTANCE(Windows::Environment::Manager).get(L"XFSPP_NO_LOG") != L"1";
 }
 
 std::ostream &Logger::streamInstance()

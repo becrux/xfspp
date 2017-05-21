@@ -55,13 +55,6 @@ Manager::Manager()
     _vars.insert({ currentKey,currentValue });
 }
 
-Manager &Manager::instance()
-{
-  static Manager inst;
-
-  return inst;
-}
-
 std::wstring Manager::get(const std::wstring &key, const std::wstring &sDefault) const
 {
   auto it = _vars.find(key);
