@@ -9,13 +9,13 @@ ADD_XFSPP_TEST(tests_mgr_startup
     ../../log/log.cpp
     ../../common/version.cpp
     ../../util/string.cpp
-  
+
   LIBS
     shlwapi
-  
+
   DEPS
     xfsmgr
-  
+
   RUN_WITH_PARAMS
     "--lib" "${CMAKE_BINARY_DIR}/out/msxfs.dll"
 )

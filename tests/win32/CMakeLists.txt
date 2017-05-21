@@ -1,3 +1,5 @@
+link_directories(${CMAKE_BINARY_DIR})
+
 ADD_XFSPP_TEST(tests_win32_handle
   SOURCES
     handle.cpp
@@ -5,8 +7,12 @@ ADD_XFSPP_TEST(tests_win32_handle
     ../../win32/exception.cpp
     ../../util/string.cpp
 
+  DEPS
+    minhook
+
   LIBS
     shlwapi
+    minhook
 )
 
 ADD_XFSPP_TEST(tests_win32_synch
@@ -20,8 +26,12 @@ ADD_XFSPP_TEST(tests_win32_synch
     ../../log/log.cpp
     ../../util/string.cpp
 
+  DEPS
+    minhook
+
   LIBS
     shlwapi
+    minhook
 )
 
 ADD_XFSPP_TEST(tests_win32_thread
@@ -34,8 +44,12 @@ ADD_XFSPP_TEST(tests_win32_thread
     ../../log/log.cpp
     ../../util/string.cpp
 
+  DEPS
+    minhook
+
   LIBS
     shlwapi
+    minhook
 )
 
 ADD_XFSPP_TEST(tests_win32_timer
@@ -50,8 +64,12 @@ ADD_XFSPP_TEST(tests_win32_timer
     ../../log/log.cpp
     ../../util/string.cpp
 
+  DEPS
+    minhook
+
   LIBS
     shlwapi
+    minhook
 )
 
 ADD_XFSPP_TEST(tests_win32_uuid
@@ -61,9 +79,13 @@ ADD_XFSPP_TEST(tests_win32_uuid
     ../../win32/exception.cpp
     ../../util/string.cpp
 
+  DEPS
+    minhook
+
   LIBS
     shlwapi
     rpcrt4
+    minhook
 )
 
 ADD_XFSPP_TEST(tests_win32_library
@@ -76,8 +98,12 @@ ADD_XFSPP_TEST(tests_win32_library
     ../../log/log.cpp
     ../../util/string.cpp
 
+  DEPS
+    minhook
+
   LIBS
     shlwapi
+    minhook
 )
 
 ADD_XFSPP_TEST(tests_win32_shared_memory
@@ -92,9 +118,13 @@ ADD_XFSPP_TEST(tests_win32_shared_memory
     ../../log/log.cpp
     ../../util/string.cpp
 
+  DEPS
+    minhook
+
   LIBS
     rpcrt4
     shlwapi
+    minhook
 )
 
 ADD_XFSPP_TEST(tests_win32_registry
@@ -106,8 +136,12 @@ ADD_XFSPP_TEST(tests_win32_registry
     ../../log/log.cpp
     ../../util/string.cpp
 
+  DEPS
+    minhook
+
   LIBS
     shlwapi
+    minhook
 )
 
 ADD_XFSPP_TEST(tests_win32_environment
@@ -117,8 +151,12 @@ ADD_XFSPP_TEST(tests_win32_environment
     ../../win32/exception.cpp
     ../../util/string.cpp
 
+  DEPS
+    minhook
+
   LIBS
     shlwapi
+    minhook
 )
 
 ADD_XFSPP_TEST(tests_win32_window
@@ -134,7 +172,11 @@ ADD_XFSPP_TEST(tests_win32_window
     ../../log/log.cpp
     ../../util/string.cpp
 
+  DEPS
+    minhook
+
   LIBS
     rpcrt4
     shlwapi
+    minhook
 )

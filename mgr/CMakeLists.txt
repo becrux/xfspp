@@ -27,4 +27,4 @@ add_custom_command(TARGET xfsmgr
   POST_BUILD
   COMMAND ${CMAKE_COMMAND} -E copy_if_different
     $<TARGET_FILE:xfsmgr>
-	${OUTPUT_DIRECTORY})
+    ${OUTPUT_DIRECTORY})

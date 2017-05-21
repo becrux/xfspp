@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.0.0)
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
-project(xfspp CXX)
+project(xfspp C CXX)
 set(CMAKE_VERBOSE_MAKEFILE TRUE)
 
 execute_process(COMMAND ${CMAKE_COMMAND} "-E" "make_directory" "${CMAKE_SOURCE_DIR}/ext" WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
