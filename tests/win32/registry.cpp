@@ -20,10 +20,22 @@ namespace
   MOCK_API_FUNCTION(LSTATUS,ERROR_ACCESS_DENIED,RegQueryInfoKey,HKEY,LPWSTR,LPDWORD,LPDWORD,LPDWORD,LPDWORD,LPDWORD,LPDWORD,LPDWORD,LPDWORD,LPDWORD,PFILETIME)
   MOCK_API_FUNCTION(LSTATUS,ERROR_ACCESS_DENIED,RegEnumKeyEx,HKEY,DWORD,LPWSTR,LPDWORD,LPDWORD,LPWSTR,LPDWORD,PFILETIME)
   MOCK_API_FUNCTION(LSTATUS,ERROR_ACCESS_DENIED,RegEnumValue,HKEY,DWORD,LPWSTR,LPDWORD,LPDWORD,LPDWORD,LPBYTE,LPDWORD)
-  MOCK_API_FUNCTION(LSTATUS,ERROR_ACCESS_DENIED,RegGetValue,HKEY,LPCWSTR,LPCWSTR,DWORD,LPDWORD,PVOID,LPDWORD)
   MOCK_API_FUNCTION(LSTATUS,ERROR_ACCESS_DENIED,RegSetValueEx,HKEY,LPCWSTR,DWORD,DWORD,CONST BYTE *,DWORD)
   MOCK_API_FUNCTION(LSTATUS,ERROR_ACCESS_DENIED,RegDeleteValue,HKEY,LPCWSTR)
   MOCK_API_FUNCTION(LSTATUS,ERROR_ACCESS_DENIED,RegDeleteKeyEx,HKEY,LPCWSTR,REGSAM,DWORD)
+
+  LSTATUS WINAPI MockRegGetValueW(HKEY, LPCWSTR, LPCWSTR lpValue, DWORD, LPDWORD, PVOID pvData, LPDWORD pcbData)
+  {
+    if (!wcscmp(lpValue,L"NoAccess"))
+      return ERROR_ACCESS_DENIED;
+    else if (pvData == NULL)
+    {
+      *pcbData = 10;
+      return ERROR_SUCCESS;
+    }
+    else
+      return ERROR_ACCESS_DENIED;
+  }
 }
 
 TEST_CASE("Registry", "[Win32]")
@@ -105,11 +117,20 @@ TEST_CASE("Registry", "[Win32]")
       RUN_WITH_HOOK(RegSetValueEx,
         {
           REQUIRE_THROWS_AS(k.setValue(L"ValueName",std::wstring(L"Hello, Wide Registry!")),Windows::Exception);
+          REQUIRE_THROWS_AS(k.setValue< DWORD >(L"ValueName",0xDEADBEEF),Windows::Exception);
         });
 
       RUN_WITH_HOOK(RegDeleteValue,
         {
           REQUIRE_THROWS_AS(k.removeValue(L"ValueName"),Windows::Exception);
+        });
+        
+      RUN_WITH_HOOK(RegGetValue,
+        {
+          REQUIRE_THROWS_AS(k.value(L"NoAccess",std::wstring(L"NoValue")),Windows::Exception);
+          REQUIRE_THROWS_AS(k.value(L"ValueName",std::wstring(L"NoValue")),Windows::Exception);
+          REQUIRE_THROWS_AS(k.value< DWORD >(L"NoAccess",0xDEADBEEF),Windows::Exception);
+          REQUIRE_THROWS_AS(k.value< DWORD >(L"ValueName",0xDEADBEEF),Windows::Exception);
         });
     }
 
