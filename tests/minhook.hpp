@@ -16,13 +16,28 @@
 
 #include "tests/minhook/include/minhook.h"
 
+#define MOCK_API_NOWIDE_FUNCTION(retType, retValue, funcName, ...) \
+  retType WINAPI Mock##funcName(__VA_ARGS__) \
+  { \
+    return retValue; \
+  }
+
 #define MOCK_API_FUNCTION(retType, retValue, funcName, ...) \
   retType WINAPI Mock##funcName##W(__VA_ARGS__) \
   { \
     return retValue; \
   }
 
+#define CREATE_NOWIDE_HOOK(funcName) MH_CreateHook(reinterpret_cast< LPVOID >(&funcName),reinterpret_cast< LPVOID >(&Mock##funcName),NULL);
 #define CREATE_HOOK(funcName) MH_CreateHook(reinterpret_cast< LPVOID >(&funcName##W),reinterpret_cast< LPVOID >(&Mock##funcName##W),NULL);
+
+#define RUN_WITH_NOWIDE_HOOK(funcName, code) \
+  { \
+    MH_EnableHook(reinterpret_cast< LPVOID >(&funcName)); \
+    code \
+    MH_DisableHook(reinterpret_cast< LPVOID >(&funcName)); \
+  } \
+  while(false)
 
 #define RUN_WITH_HOOK(funcName, code) \
   { \

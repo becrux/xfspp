@@ -9,9 +9,16 @@
 #include <numeric>
 
 #include "tests/catch.hpp"
+#include "tests/minhook.hpp"
 
 #include "win32/shmem.hpp"
 
+namespace
+{
+  MOCK_API_FUNCTION(HANDLE,NULL,CreateFileMapping,HANDLE,LPSECURITY_ATTRIBUTES,DWORD,DWORD,DWORD,LPCTSTR)
+  MOCK_API_NOWIDE_FUNCTION(LPVOID,NULL,MapViewOfFileEx,HANDLE,DWORD,DWORD,DWORD,SIZE_T,LPVOID)
+}
+  
 TEST_CASE("Shared memory", "[Win32]")
 {
   SECTION("typed access")
@@ -66,9 +73,31 @@ TEST_CASE("Shared memory", "[Win32]")
         REQUIRE(*(ptr + size - 1) == 255);
     });
   }
+  
+  SECTION("failure")
+  {
+    RUN_WITH_HOOK(CreateFileMapping,
+    {
+      REQUIRE_THROWS_AS(Windows::SharedMemory< DWORD >(L"BadMemory"),Windows::Exception);
+    });
+
+    RUN_WITH_NOWIDE_HOOK(MapViewOfFileEx,
+    {
+      REQUIRE_THROWS_AS(Windows::SharedMemory< DWORD >(L"BadMemoryPtr"),Windows::Exception);
+    });
+  }
 }
 
 extern "C" int wmain(int argc, wchar_t **argv, wchar_t **)
 {
-  return run(argc,argv);
+  int err;
+  RUN_WITH_MINHOOK(
+    {
+      CREATE_HOOK(CreateFileMapping);
+      CREATE_NOWIDE_HOOK(MapViewOfFileEx);
+
+      err = run(argc,argv);
+	});
+	
+  return err;
 }
