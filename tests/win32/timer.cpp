@@ -11,6 +11,11 @@
 
 #include "win32/timer.hpp"
 
+namespace
+{
+  MOCK_API_NOWIDE_FUNCTION(DWORD,WAIT_FAILED,WaitForSingleObjectEx,HANDLE,DWORD,BOOL)
+}
+
 TEST_CASE("Timers", "[Win32]")
 {
   SECTION("triggered")
@@ -35,9 +40,9 @@ TEST_CASE("Timers", "[Win32]")
 
     Windows::Timer t(2000,
       [&flag] ()
-    {
-      flag = true;
-    });
+        {
+          flag = true;
+        });
 
     REQUIRE(t);
 
@@ -49,7 +54,7 @@ TEST_CASE("Timers", "[Win32]")
 
   SECTION("failure")
   {
-   RUN_WITH_NOWIDE_HOOK(WaitForSingleObjectEx,
+    RUN_WITH_NOWIDE_HOOK(WaitForSingleObjectEx,
     {
       bool flag = false;
 

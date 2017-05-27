@@ -37,7 +37,7 @@ void Thread::doJoin(bool rethrow)
 
   if (handle())
   {
-    if (WaitForSingleObjectEx(handle(),INFINITE,FALSE) == WAIT_FAILED)
+    if ((WaitForSingleObjectEx(handle(),INFINITE,FALSE) == WAIT_FAILED) && rethrow)
       throw Exception();
   }
 
@@ -56,8 +56,7 @@ DWORD WINAPI Thread::threadProc(LPVOID lpParameter)
 {
   ::Log::Method m(__SIGNATURE__);
 
-  Thread *me = 
-reinterpret_cast< Thread * >(lpParameter);
+  Thread *me = reinterpret_cast< Thread * >(lpParameter);
 
   try
   {
