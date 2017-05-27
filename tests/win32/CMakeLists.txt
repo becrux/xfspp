@@ -15,6 +15,20 @@ ADD_XFSPP_TEST(tests_win32_handle
     minhook
 )
 
+ADD_XFSPP_TEST(tests_win32_string
+  SOURCES
+    string.cpp
+    ../../win32/exception.cpp
+    ../../util/string.cpp
+
+  DEPS
+    minhook
+
+  LIBS
+    shlwapi
+    minhook
+)
+
 ADD_XFSPP_TEST(tests_win32_synch
   SOURCES
     synch.cpp

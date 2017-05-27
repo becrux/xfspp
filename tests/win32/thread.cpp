@@ -46,6 +46,17 @@ TEST_CASE("Threads", "[Win32]")
         REQUIRE_THROWS_AS(t.join(),Windows::Exception);
       });
   }
+
+  SECTION("failure in thread")
+  {
+    Windows::Thread t([] ()
+      {
+        SleepEx(2000,FALSE);
+        throw std::invalid_argument("error");
+      });
+
+    REQUIRE_THROWS_AS(t.join(),std::invalid_argument);
+  }
 }
 
 extern "C" int wmain(int argc, wchar_t **argv, wchar_t **)

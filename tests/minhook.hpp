@@ -29,7 +29,9 @@
   }
 
 #define CREATE_NOWIDE_HOOK(funcName) MH_CreateHook(reinterpret_cast< LPVOID >(&funcName),reinterpret_cast< LPVOID >(&Mock##funcName),NULL);
+#define CREATE_NOWIDE_WITH_PREV_HOOK(funcName, prevFunc) MH_CreateHook(reinterpret_cast< LPVOID >(&funcName),reinterpret_cast< LPVOID >(&Mock##funcName),reinterpret_cast< LPVOID * >(&prevFunc));
 #define CREATE_HOOK(funcName) MH_CreateHook(reinterpret_cast< LPVOID >(&funcName##W),reinterpret_cast< LPVOID >(&Mock##funcName##W),NULL);
+#define CREATE_WITH_PREV_HOOK(funcName, prevFunc) MH_CreateHook(reinterpret_cast< LPVOID >(&funcName##W),reinterpret_cast< LPVOID >(&Mock##funcName##W),reinterpret_cast< LPVOID * >(&prevFunc##W));
 
 #define RUN_WITH_NOWIDE_HOOK(funcName, code) \
   { \
