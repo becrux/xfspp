@@ -7,6 +7,7 @@
  */
 
 #include "tests/catch.hpp"
+#include "tests/minhook.hpp"
 
 #include "win32/timer.hpp"
 
@@ -45,9 +46,36 @@ TEST_CASE("Timers", "[Win32]")
     SleepEx(2000,FALSE);
     REQUIRE(!flag);
   }
+
+  SECTION("failure")
+  {
+   RUN_WITH_NOWIDE_HOOK(WaitForSingleObjectEx,
+    {
+      bool flag = false;
+
+      Windows::Timer t(2000,
+        [&flag] ()
+          {
+            flag = true;
+          });
+
+      REQUIRE(t);
+
+      SleepEx(3000,FALSE);
+      REQUIRE(!flag);
+    });
+  }
 }
 
 extern "C" int wmain(int argc, wchar_t **argv, wchar_t **)
 {
-  return run(argc,argv);
+  int err;
+  RUN_WITH_MINHOOK(
+    {
+      CREATE_NOWIDE_HOOK(WaitForSingleObjectEx);
+      
+      err = run(argc,argv);
+    });
+  
+  return err;
 }

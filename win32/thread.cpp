@@ -25,10 +25,10 @@ Thread::~Thread()
 {
   ::Log::Method m(__SIGNATURE__);
 
-  join();
+  doJoin(false);
 }
 
-void Thread::join()
+void Thread::doJoin(bool rethrow)
 {
   ::Log::Method m(__SIGNATURE__);
 
@@ -42,13 +42,31 @@ void Thread::join()
   }
 
   _joined = true;
+
+  if (_eptr && rethrow)
+    std::rethrow_exception(_eptr);
+}
+
+void Thread::join()
+{
+  doJoin(true);
 }
 
 DWORD WINAPI Thread::threadProc(LPVOID lpParameter)
 {
   ::Log::Method m(__SIGNATURE__);
 
-  reinterpret_cast< Thread * >(lpParameter)->_f();
+  Thread *me = 
+reinterpret_cast< Thread * >(lpParameter);
+
+  try
+  {
+    me->_f();
+  }
+  catch (...)
+  {
+    me->_eptr = std::current_exception();
+  }
 
   return 0;
 }

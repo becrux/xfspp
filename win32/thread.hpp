@@ -11,6 +11,7 @@
 #define __THREAD_HPP__
 
 #include <functional>
+#include <exception>
 
 #include "win32/handle.hpp"
 #include "util/constraints.hpp"
@@ -20,11 +21,14 @@ namespace Windows
   class Thread : public Handle<>
   {
     bool _joined;
+    std::exception_ptr _eptr;
     std::function< void () > _f;
 
     static DWORD WINAPI threadProc(LPVOID lpParameter);
 
     NON_COPYABLE(Thread);
+    
+    void doJoin(bool rethrow);
 
   public:
     explicit Thread(std::function< void () > f);
