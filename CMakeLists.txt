@@ -9,9 +9,9 @@ execute_process(COMMAND ${CMAKE_COMMAND} "-E" "make_directory" "${CMAKE_SOURCE_D
 
 if(NOT EXISTS ${CMAKE_SOURCE_DIR}/ext/sqlite)
   message(STATUS "Downloading latest SQLite release ...")
-  file(DOWNLOAD https://www.sqlite.org/2017/sqlite-amalgamation-3180000.zip ${CMAKE_BINARY_DIR}/sqlite.zip)
+  file(DOWNLOAD http://sqlite.org/2017/sqlite-amalgamation-3190200.zip ${CMAKE_BINARY_DIR}/sqlite.zip)
   execute_process(COMMAND ${CMAKE_COMMAND} "-E" "tar" "xvf" "${CMAKE_BINARY_DIR}/sqlite.zip" WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/ext)
-  execute_process(COMMAND ${CMAKE_COMMAND} "-E" "rename" "sqlite-amalgamation-3180000" "sqlite" WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/ext)
+  execute_process(COMMAND ${CMAKE_COMMAND} "-E" "rename" "sqlite-amalgamation-3190200" "sqlite" WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/ext)
 endif()
 
 if(NOT EXISTS ${CMAKE_SOURCE_DIR}/ext/catch)

@@ -32,6 +32,8 @@ namespace Windows
 
     static LRESULT CALLBACK wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
+    void doClose(bool rethrow);
+
   public:
     explicit MsgWnd(HINSTANCE hInstance, std::function< void (UINT, WPARAM, LPARAM) > f);
     ~MsgWnd();

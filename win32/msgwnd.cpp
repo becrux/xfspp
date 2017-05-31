@@ -25,7 +25,7 @@ MsgWnd::MsgWnd(HINSTANCE hInstance, std::function< void (UINT, WPARAM, LPARAM) >
 
 MsgWnd::~MsgWnd()
 {
-  close();
+  doClose(false);
 }
 
 HWND MsgWnd::handle() const
@@ -83,11 +83,32 @@ void MsgWnd::start()
   sem.acquire();
 }
 
+void MsgWnd::doClose(bool rethrow)
+{
+  if (!_t)
+    return;
+
+  try
+  {
+    _closing = true;
+    if (!PostMessage(handle(),WM_CLOSE,0,0))
+      throw Exception();
+
+    _t->join();
+    _t.reset();
+  }
+  catch (...)
+  {
+    _t.reset();
+
+    if (rethrow)
+      throw;
+  }
+}
+
 void MsgWnd::close()
 {
-  _closing = true;
-  if (!PostMessage(handle(),WM_CLOSE,0,0))
-    throw Exception();
+  doClose(true);
 }
 
 LRESULT CALLBACK MsgWnd::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -113,7 +134,7 @@ LRESULT CALLBACK MsgWnd::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
           return 0;
         }
       }
-      return 1;
+      break;
 
     case WM_DESTROY:
       {
@@ -125,7 +146,7 @@ LRESULT CALLBACK MsgWnd::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
           return 0;
         }
       }
-      return 1;
+      break;
 
     default:
       {
