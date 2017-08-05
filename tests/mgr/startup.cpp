@@ -11,7 +11,7 @@
 #include "tests/catch.hpp"
 
 #include "win32/library.hpp"
-#include "common/version.hpp"
+#include "xfs/version.hpp"
 
 #include "xfsapi.h"
 

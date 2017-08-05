@@ -8,7 +8,7 @@
 
 #include "tests/catch.hpp"
 
-#include "common/version.hpp"
+#include "xfs/version.hpp"
 
 TEST_CASE("Version", "[XFS]")
 {

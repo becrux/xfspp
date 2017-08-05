@@ -7,8 +7,8 @@
  */
 
 #pragma once
-#ifndef EXCEPTION_HPP
-#define EXCEPTION_HPP
+#ifndef __WIN32_EXCEPTION_HPP__
+#define __WIN32_EXCEPTION_HPP__
 
 #include <system_error>
 

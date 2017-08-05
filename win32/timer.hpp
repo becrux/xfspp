@@ -7,8 +7,8 @@
  */
 
 #pragma once
-#ifndef __TIMER_HPP__
-#define __TIMER_HPP__
+#ifndef __WIN32_TIMER_HPP__
+#define __WIN32_TIMER_HPP__
 
 #include <functional>
 

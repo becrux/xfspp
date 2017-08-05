@@ -9,7 +9,7 @@ set(SOURCES
   ../win32/environment.cpp
   ../win32/exception.cpp
   ../log/log.cpp
-  ../common/version.cpp
+  ../xfs/version.cpp
   ../util/string.cpp
   main.cpp
   mgr.def

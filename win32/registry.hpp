@@ -7,11 +7,12 @@
  */
 
 #pragma once
-#ifndef __REGISTRY_HPP__
-#define __REGISTRY_HPP__
+#ifndef __WIN32_REGISTRY_HPP__
+#define __WIN32_REGISTRY_HPP__
 
 #include <string>
 #include <map>
+#include <set>
 #include <vector>
 #include <sstream>
 
@@ -40,25 +41,20 @@ namespace Windows
 
       DWORD disposition() const;
 
-      std::vector< std::wstring > subKeys() const;
+      std::set< std::wstring > subKeys() const;
 
       std::map< std::wstring,std::tuple< DWORD,std::vector< BYTE > > > values() const;
 
       template< typename T >
-      T value(const std::wstring &sValueName, const T &defaultValue = T()) const
+      T value(const std::wstring &sValueName) const
       {
         DWORD bufSize = 0;
 
         LONG err;
         if ((err = RegGetValue(handle(),L"",sValueName.c_str(),RRF_RT_REG_SZ | RRF_NOEXPAND,NULL,NULL,&bufSize)) != ERROR_SUCCESS)
         {
-          if (err == ERROR_FILE_NOT_FOUND)
-            return defaultValue;
-          else
-          {
-            SetLastError(static_cast< DWORD >(err));
-            throw Exception();
-          }
+          SetLastError(static_cast< DWORD >(err));
+          throw Exception();
         }
 
         std::wstring buf(bufSize / 2,L'\0');
@@ -75,6 +71,22 @@ namespace Windows
         iss >> res;
 
         return res;
+      }
+
+      template< typename T >
+      T value(const std::wstring &sValueName, const T &defaultValue) const
+      {
+        try
+        {
+          return value< T >(sValueName);
+        }
+        catch (const Exception &e)
+        {
+          if (e.code().value() == ERROR_FILE_NOT_FOUND)
+            return defaultValue;
+          else
+            throw;
+        }
       }
 
       void remove(const std::wstring &sSubPath);
@@ -97,9 +109,8 @@ namespace Windows
         }
       }
 
-      std::string value(const std::wstring &sValueName, const std::string &defaultValue = "") const;
-      std::wstring value(const std::wstring &sValueName, const std::wstring &defaultValue = L"") const;
-      void setValue(const std::wstring &sValueName, const std::string &tValue);
+      std::wstring value(const std::wstring &sValueName) const;
+      std::wstring value(const std::wstring &sValueName, const std::wstring &defaultValue) const;
       void setValue(const std::wstring &sValueName, const std::wstring &tValue);
     };
   }

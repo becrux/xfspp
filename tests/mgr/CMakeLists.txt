@@ -7,7 +7,7 @@ ADD_XFSPP_TEST(tests_mgr_startup
     ../../win32/environment.cpp
     ../../win32/exception.cpp
     ../../log/log.cpp
-    ../../common/version.cpp
+    ../../xfs/version.cpp
     ../../util/string.cpp
 
   LIBS

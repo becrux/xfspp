@@ -7,6 +7,10 @@ set(SOURCES
   ../../win32/environment.cpp
   ../../win32/exception.cpp
   ../../win32/library.cpp
+  ../../xfs/registry.cpp
+  ../../xfs/allocator.cpp
+  ../../xfs/exception.cpp
+  ../../xfs/version.cpp
   ../../log/log.cpp
   ../../util/string.cpp
   main.cpp

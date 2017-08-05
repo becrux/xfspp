@@ -31,7 +31,7 @@ namespace Log
 {
   class Logger: public std::ostringstream
   {
-    static std::string getPathFromRegistry();
+    static std::wstring getPathFromRegistry();
 
     static std::ostream &getFileStreamInstance();
     static std::ostream &getNullStreamInstance();

@@ -78,9 +78,9 @@ void Key::removeValue(const std::wstring &sValueName)
   }
 }
 
-std::vector< std::wstring > Key::subKeys() const
+std::set< std::wstring > Key::subKeys() const
 {
-  std::vector< std::wstring > res;
+  std::set< std::wstring > res;
 
   LONG err;
 
@@ -106,7 +106,7 @@ std::vector< std::wstring > Key::subKeys() const
 
     item.resize(bufSize);
 
-    res.emplace_back(item);
+    res.emplace(item);
   }
 
   return res;
@@ -150,19 +150,14 @@ std::map< std::wstring,std::tuple< DWORD,std::vector< BYTE > > > Key::values() c
   return res;
 }
 
-std::wstring Key::value(const std::wstring &sValueName, const std::wstring &defaultValue) const
+std::wstring Key::value(const std::wstring &sValueName) const
 {
   DWORD bufSize = 0;
   LONG err;
   if ((err = RegGetValue(handle(),L"",sValueName.c_str(),RRF_RT_REG_SZ | RRF_NOEXPAND,NULL,NULL,&bufSize)) != ERROR_SUCCESS)
   {
-    if (err == ERROR_FILE_NOT_FOUND)
-      return defaultValue;
-    else
-    {
-      SetLastError(static_cast< DWORD >(err));
-      throw Exception();
-    }
+    SetLastError(static_cast< DWORD >(err));
+    throw Exception();
   }
 
   std::wstring res(bufSize / 2,L'\0');
@@ -178,12 +173,22 @@ std::wstring Key::value(const std::wstring &sValueName, const std::wstring &defa
   return res;
 }
 
-std::string Key::value(const std::wstring &sValueName,const std::string &defaultValue) const
+std::wstring Key::value(const std::wstring &sValueName, const std::wstring &defaultValue) const
 {
-  return convertTo(value(sValueName,convertTo(defaultValue)));
+  try
+  {
+    return value(sValueName);
+  }
+  catch (const Exception &e)
+  {
+    if (e.code().value() == ERROR_FILE_NOT_FOUND)
+      return defaultValue;
+    else
+      throw;
+  }
 }
 
-void Key::setValue(const std::wstring &sValueName,const std::wstring &tValue)
+void Key::setValue(const std::wstring &sValueName, const std::wstring &tValue)
 {
   LONG err;
 
@@ -192,9 +197,4 @@ void Key::setValue(const std::wstring &sValueName,const std::wstring &tValue)
     SetLastError(static_cast< DWORD >(err));
     throw Exception();
   }
-}
-
-void Key::setValue(const std::wstring &sValueName, const std::string &tValue)
-{
-  return setValue(sValueName,convertTo(tValue));
 }

@@ -7,8 +7,8 @@
  */
 
 #pragma once
-#ifndef __THREAD_HPP__
-#define __THREAD_HPP__
+#ifndef __WIN32_THREAD_HPP__
+#define __WIN32_THREAD_HPP__
 
 #include <functional>
 #include <exception>

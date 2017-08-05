@@ -7,8 +7,8 @@
 */
 
 #pragma once
-#ifndef STRING_HPP
-#define STRING_HPP
+#ifndef __UTIL_STRING_HPP__
+#define __UTIL_STRING_HPP__
 
 #include <sstream>
 #include <string>

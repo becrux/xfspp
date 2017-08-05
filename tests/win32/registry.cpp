@@ -101,18 +101,14 @@ TEST_CASE("Registry", "[Win32]")
       REQUIRE(k.value< DWORD >(L"ValueName2",0x89ABCDEF) == 0x89ABCDEF);
       REQUIRE(k.values().size() == 1);
 
-      k.setValue(L"ValueName","Hello, Registry!");
-      REQUIRE((k.value(L"ValueName","Goodbye!") == "Hello, Registry!"));
-
-      k.setValue(L"ValueName",L"Hello, Wide Registry!");
-      REQUIRE((k.value(L"ValueName",L"Goodbye!") == L"Hello, Wide Registry!"));
+      k.setValue(L"ValueName",L"Hello, Registry!");
+      REQUIRE((k.value(L"ValueName",L"Goodbye!") == L"Hello, Registry!"));
 
       k.removeValue(L"ValueName");
       REQUIRE(k.value< DWORD >(L"ValueName",0xDEADBEEF) == 0xDEADBEEF);
       REQUIRE(k.values().empty());
 
-      REQUIRE(k.value(L"ValueName","Test String") == "Test String");
-      REQUIRE(k.value(L"ValueName",L"Test Wide String") == L"Test Wide String");
+      REQUIRE(k.value(L"ValueName",L"Test String") == L"Test String");
 
       RUN_WITH_HOOK(RegSetValueEx,
         {

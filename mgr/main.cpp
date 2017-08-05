@@ -21,7 +21,7 @@
 #include "win32/shmem.hpp"
 #include "win32/library.hpp"
 #include "win32/msgwnd.hpp"
-#include "common/version.hpp"
+#include "xfs/version.hpp"
 #include "util/memory.hpp"
 #include "util/methodscope.hpp"
 #include "util/constraints.hpp"
@@ -1004,7 +1004,7 @@ extern "C" HRESULT WINAPI WFMEnumKey(HKEY hKey, DWORD iSubKey, LPSTR lpszName, L
 {
   initializeContext();
 
-  if (!lpszName || !lpcchName || !lpftLastWrite)
+  if (!lpszName || !lpcchName || ((*lpcchName > 0) && !lpszName))
     return WFS_ERR_INVALID_POINTER;
 
   SecureZeroMemory(lpszName,*lpcchName);
@@ -1109,7 +1109,7 @@ extern "C" HRESULT WINAPI WFMQueryValue(HKEY hKey, LPSTR lpszValueName, LPSTR lp
 {
   initializeContext();
 
-  if (!lpszValueName || !lpszData || !lpcchData)
+  if (!lpszValueName || !lpcchData || ((*lpcchData > 0) && !lpszData))
     return WFS_ERR_INVALID_POINTER;
 
   SecureZeroMemory(lpszData,*lpcchData);

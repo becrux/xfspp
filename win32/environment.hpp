@@ -7,8 +7,8 @@
  */
 
 #pragma once
-#ifndef ENVIRONMENT_HPP
-#define ENVIRONMENT_HPP
+#ifndef __WIN32_ENVIRONMENT_HPP__
+#define __WIN32_ENVIRONMENT_HPP__
 
 #include <list>
 #include <map>

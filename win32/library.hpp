@@ -7,8 +7,8 @@
  */
 
 #pragma once
-#ifndef __LIBRARY_HPP__
-#define __LIBRARY_HPP__
+#ifndef __WIN32_LIBRARY_HPP__
+#define __WIN32_LIBRARY_HPP__
 
 #include <string>
 #include <stdexcept>

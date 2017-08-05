@@ -7,8 +7,8 @@
  */
 
 #pragma once
-#ifndef __SYNCH_HPP__
-#define __SYNCH_HPP__
+#ifndef __WIN32_SYNCH_HPP__
+#define __WIN32_SYNCH_HPP__
 
 #include <string>
 

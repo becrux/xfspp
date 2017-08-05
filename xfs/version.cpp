@@ -1,4 +1,4 @@
-/* common/version.cpp
+/* xfs/version.cpp
  *
  * Copyright (C) 2007 Antonio Di Monaco
  *
@@ -9,7 +9,7 @@
 #include <iomanip>
 #include <limits>
 
-#include "common/version.hpp"
+#include "xfs/version.hpp"
 
 using namespace XFS;
 

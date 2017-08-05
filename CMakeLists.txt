@@ -52,8 +52,10 @@ add_library(fmt
   "${CMAKE_SOURCE_DIR}/ext/fmt/printf.cc"
 )
 
-target_compile_options(fmt PRIVATE "/TP")
-target_compile_definitions(fmt PRIVATE "/D _MBCS")
+if(MSVC)
+  target_compile_options(fmt PRIVATE "/TP")
+  target_compile_definitions(fmt PRIVATE "/D_MBCS")
+endif()
 
 if(MSVC)
   set(CMAKE_CXX_FLAGS "/Wall /wd4710 /wd4820 /wd4668 /wd4514 /wd4355 /wd4350 /wd4640 /wd4711 /EHa /GR /fp:fast")

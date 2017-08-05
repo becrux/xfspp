@@ -10,7 +10,13 @@
 #include "win32/synch.hpp"
 #include "win32/registry.hpp"
 #include "win32/library.hpp"
+#include "win32/thread.hpp"
 #include "util/memory.hpp"
+#include "fmt/format.h"
+#include "xfs/registry.hpp"
+#include "xfs/exception.hpp"
+#include "xfs/version.hpp"
+#include "sp/mgrtest/mgrtest.h"
 
 #include <unordered_map>
 #include <unordered_set>
@@ -24,16 +30,15 @@ namespace
   {
     HWND hWnd;
     DWORD timeOut;
+    Windows::Thread thread;
+
+    explicit Request(HWND h, DWORD t, std::function< void () > f) :
+      hWnd(h), timeOut(t), thread(f) { }
   };
 
-  struct Instance
-  {
-    std::unordered_map< REQUESTID,Request > requests;
-  };
+  std::unordered_map< HSERVICE,std::unordered_map< REQUESTID,Request > > instances;
 
-  std::unordered_map< HSERVICE,Instance > instances;
-
-  std::unique_ptr< Windows::Library > mgrLib;
+  std::shared_ptr< Windows::Library > mgrLib;
 }
 
 HRESULT WINAPI WFPCancelAsyncRequest(HSERVICE hService, REQUESTID RequestID)
@@ -89,7 +94,7 @@ HRESULT WINAPI WFPOpen(HSERVICE hService, LPSTR lpszLogicalName, HAPP hApp, LPST
 
       std::wstring p = k.value(L"dllName",L"msxfs.dll");
 
-      mgrLib = std::make_unique< Windows::Library >(p);
+      mgrLib = std::make_shared< Windows::Library >(p);
     }
     catch (const Windows::Exception &e)
     {
@@ -106,16 +111,47 @@ HRESULT WINAPI WFPOpen(HSERVICE hService, LPSTR lpszLogicalName, HAPP hApp, LPST
 
   try
   {
-    /*
-    mgrLib->call< HRESULT >(
-      "WFMOpenKey",
-      WFS_CFG_HKEY_USER_DEFAULT_XFS_ROOT,
-      (boost::format("LOGICAL_SERVICES\\%s") % lpszLogicalName).str())
-      */
-  }
-  catch (const Windows::Exception &e)
-  {
+    XFS::Registry::Key key(fmt::format("LOGICAL_SERVICES\\{}",lpszLogicalName),mgrLib);
+    if (key.value("class") != WFS_SERVICE_CLASS_NAME_MGR_TEST)
+      return WFS_ERR_INVALID_SERVPROV;
 
+    XFS::Version currentVersion(WFS_SERVICE_CLASS_VERSION_MGR_TEST);
+
+    lpSPIVersion->wLowVersion = 
+      lpSPIVersion->wHighVersion = currentVersion.value();
+
+    XFS::VersionRange versionRange(dwSPIVersionsRequired);
+
+    if (currentVersion < versionRange.start())
+    {
+      lpSPIVersion->wVersion = 0;
+      return WFS_ERR_SPI_VER_TOO_LOW;
+    }
+    else if (currentVersion > versionRange.end())
+    {
+      lpSPIVersion->wVersion = 0;
+      return WFS_ERR_SPI_VER_TOO_HIGH;
+    }
+    else
+      lpSPIVersion->wVersion = currentVersion.value();
+
+    lpSrvcVersion->wVersion = currentVersion.value();
+    lpSrvcVersion->szSystemStatus[0] = '\0';
+    lpSrvcVersion->szDescription[0] = '\0';
+
+    /*
+    instances[hService].emplace(ReqID,Request(hWnd,dwTimeOut,
+      [hWnd, dwTimeOut] ()
+        {
+          SleepEx(1000,FALSE);
+          PostMessage(hWnd,WFS_OPEN_COMPLETE,NULL,NULL);
+        }));
+    */
+    return WFS_SUCCESS;
+  }
+  catch (XFS::Exception &e)
+  {
+    return WFS_ERR_INVALID_SERVPROV;
   }
 
   return WFS_SUCCESS;

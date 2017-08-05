@@ -23,14 +23,14 @@ public:
   int overflow(int c) { return c; }
 };
 
-std::string Logger::getPathFromRegistry()
+std::wstring Logger::getPathFromRegistry()
 {
-  return Windows::Registry::Key(L"Software\\xfspp",HKEY_LOCAL_MACHINE).value(L"logFileName",std::string("xfspp_mgr.log"));
+  return Windows::Registry::Key(L"Software\\xfspp",HKEY_LOCAL_MACHINE).value(L"logFileName",L"xfspp_mgr.log");
 }
 
 std::ostream &Logger::getFileStreamInstance()
 {
-  static std::ofstream f(getPathFromRegistry(),std::ios::out);
+  static std::ofstream f(convertTo(getPathFromRegistry()),std::ios::out);
 
   return f;
 }

@@ -1,4 +1,4 @@
-/* common/version.hpp
+/* xfs/version.hpp
  *
  * Copyright (C) 2007 Antonio Di Monaco
  *
@@ -7,8 +7,8 @@
  */
 
 #pragma once
-#ifndef __VERSION_HPP__
-#define __VERSION_HPP__
+#ifndef __XFS_VERSION_HPP__
+#define __XFS_VERSION_HPP__
 
 #include <iostream>
 #include <tuple>
