@@ -96,12 +96,12 @@ namespace Windows
           throw Exception();
         }
       }
-    };
 
-    template<> std::string Key::value< std::string >(const std::wstring &sValueName, const std::string &defaultValue) const;
-    template<> std::wstring Key::value< std::wstring >(const std::wstring &sValueName, const std::wstring &defaultValue) const;
-    template<> void Key::setValue< std::string >(const std::wstring &sValueName, const std::string &tValue);
-    template<> void Key::setValue< std::wstring >(const std::wstring &sValueName, const std::wstring &tValue);
+      std::string value(const std::wstring &sValueName, const std::string &defaultValue = "") const;
+      std::wstring value(const std::wstring &sValueName, const std::wstring &defaultValue = L"") const;
+      void setValue(const std::wstring &sValueName, const std::string &tValue);
+      void setValue(const std::wstring &sValueName, const std::wstring &tValue);
+    };
   }
 }
 

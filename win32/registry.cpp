@@ -150,8 +150,7 @@ std::map< std::wstring,std::tuple< DWORD,std::vector< BYTE > > > Key::values() c
   return res;
 }
 
-template<>
-std::wstring Key::value< std::wstring >(const std::wstring &sValueName, const std::wstring &defaultValue) const
+std::wstring Key::value(const std::wstring &sValueName, const std::wstring &defaultValue) const
 {
   DWORD bufSize = 0;
   LONG err;
@@ -179,14 +178,12 @@ std::wstring Key::value< std::wstring >(const std::wstring &sValueName, const st
   return res;
 }
 
-template<>
-std::string Key::value< std::string >(const std::wstring &sValueName,const std::string &defaultValue) const
+std::string Key::value(const std::wstring &sValueName,const std::string &defaultValue) const
 {
   return convertTo(value(sValueName,convertTo(defaultValue)));
 }
 
-template<>
-void Key::setValue< std::wstring >(const std::wstring &sValueName,const std::wstring &tValue)
+void Key::setValue(const std::wstring &sValueName,const std::wstring &tValue)
 {
   LONG err;
 
@@ -197,8 +194,7 @@ void Key::setValue< std::wstring >(const std::wstring &sValueName,const std::wst
   }
 }
 
-template<>
-void Key::setValue< std::string >(const std::wstring &sValueName, const std::string &tValue)
+void Key::setValue(const std::wstring &sValueName, const std::string &tValue)
 {
   return setValue(sValueName,convertTo(tValue));
 }

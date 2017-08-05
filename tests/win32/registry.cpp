@@ -101,22 +101,22 @@ TEST_CASE("Registry", "[Win32]")
       REQUIRE(k.value< DWORD >(L"ValueName2",0x89ABCDEF) == 0x89ABCDEF);
       REQUIRE(k.values().size() == 1);
 
-      k.setValue(L"ValueName",std::string("Hello, Registry!"));
-      REQUIRE((k.value(L"ValueName",std::string("Goodbye!")) == "Hello, Registry!"));
+      k.setValue(L"ValueName","Hello, Registry!");
+      REQUIRE((k.value(L"ValueName","Goodbye!") == "Hello, Registry!"));
 
-      k.setValue(L"ValueName",std::wstring(L"Hello, Wide Registry!"));
-      REQUIRE((k.value(L"ValueName",std::wstring(L"Goodbye!")) == L"Hello, Wide Registry!"));
+      k.setValue(L"ValueName",L"Hello, Wide Registry!");
+      REQUIRE((k.value(L"ValueName",L"Goodbye!") == L"Hello, Wide Registry!"));
 
       k.removeValue(L"ValueName");
       REQUIRE(k.value< DWORD >(L"ValueName",0xDEADBEEF) == 0xDEADBEEF);
       REQUIRE(k.values().empty());
 
-      REQUIRE(k.value(L"ValueName",std::string("Test String")) == "Test String");
-      REQUIRE(k.value(L"ValueName",std::wstring(L"Test Wide String")) == L"Test Wide String");
+      REQUIRE(k.value(L"ValueName","Test String") == "Test String");
+      REQUIRE(k.value(L"ValueName",L"Test Wide String") == L"Test Wide String");
 
       RUN_WITH_HOOK(RegSetValueEx,
         {
-          REQUIRE_THROWS_AS(k.setValue(L"ValueName",std::wstring(L"Hello, Wide Registry!")),Windows::Exception);
+          REQUIRE_THROWS_AS(k.setValue(L"ValueName",L"Hello, Wide Registry!"),Windows::Exception);
           REQUIRE_THROWS_AS(k.setValue< DWORD >(L"ValueName",0xDEADBEEF),Windows::Exception);
         });
 
@@ -127,8 +127,8 @@ TEST_CASE("Registry", "[Win32]")
         
       RUN_WITH_HOOK(RegGetValue,
         {
-          REQUIRE_THROWS_AS(k.value(L"NoAccess",std::wstring(L"NoValue")),Windows::Exception);
-          REQUIRE_THROWS_AS(k.value(L"ValueName",std::wstring(L"NoValue")),Windows::Exception);
+          REQUIRE_THROWS_AS(k.value(L"NoAccess",L"NoValue"),Windows::Exception);
+          REQUIRE_THROWS_AS(k.value(L"ValueName",L"NoValue"),Windows::Exception);
           REQUIRE_THROWS_AS(k.value< DWORD >(L"NoAccess",0xDEADBEEF),Windows::Exception);
           REQUIRE_THROWS_AS(k.value< DWORD >(L"ValueName",0xDEADBEEF),Windows::Exception);
         });

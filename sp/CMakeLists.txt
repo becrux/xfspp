@@ -19,3 +19,5 @@ file(GLOB_RECURSE HEADERS "${CMAKE_SOURCE_DIR}/*.h*")
 add_library(test_sp SHARED ${SOURCES} ${HEADERS})
 
 target_link_libraries(test_sp shlwapi)
+
+add_subdirectory(mgrtest)

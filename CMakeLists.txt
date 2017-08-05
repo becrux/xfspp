@@ -5,7 +5,7 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 project(xfspp C CXX)
 set(CMAKE_VERBOSE_MAKEFILE TRUE)
 
-execute_process(COMMAND ${CMAKE_COMMAND} "-E" "make_directory" "${CMAKE_SOURCE_DIR}/ext" WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+execute_process(COMMAND ${CMAKE_COMMAND} "-E" "make_directory" "${CMAKE_SOURCE_DIR}/ext")
 
 if(NOT EXISTS ${CMAKE_SOURCE_DIR}/ext/sqlite)
   message(STATUS "Downloading latest SQLite release ...")
@@ -16,7 +16,17 @@ endif()
 
 if(NOT EXISTS ${CMAKE_SOURCE_DIR}/ext/catch)
   message(STATUS "Downloading latest Catch release ...")
-  file(DOWNLOAD https://github.com/philsquared/Catch/releases/download/v1.9.4/catch.hpp ${CMAKE_SOURCE_DIR}/ext/catch/catch.hpp)
+  file(DOWNLOAD https://github.com/philsquared/Catch/releases/download/v1.9.6/catch.hpp ${CMAKE_SOURCE_DIR}/ext/catch/catch.hpp)
+endif()
+
+if(NOT EXISTS ${CMAKE_SOURCE_DIR}/ext/fmt)
+  message(STATUS "Downloading latest fmt release ...")
+  execute_process(COMMAND ${CMAKE_COMMAND} "-E" "make_directory" "${CMAKE_BINARY_DIR}/temp")
+  file(DOWNLOAD https://github.com/fmtlib/fmt/archive/4.0.0.zip ${CMAKE_BINARY_DIR}/fmt.zip)
+  execute_process(COMMAND ${CMAKE_COMMAND} "-E" "tar" "xvf" "${CMAKE_BINARY_DIR}/fmt.zip" WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/temp)
+  execute_process(COMMAND ${CMAKE_COMMAND} "-E" "make_directory" "${CMAKE_SOURCE_DIR}/ext/fmt")
+  execute_process(COMMAND ${CMAKE_COMMAND} "-E" "copy_directory" "${CMAKE_BINARY_DIR}/temp/fmt-4.0.0/fmt" ${CMAKE_SOURCE_DIR}/ext/fmt)
+  execute_process(COMMAND ${CMAKE_COMMAND} "-E" "remove" "-f" "${CMAKE_SOURCE_DIR}/ext/fmt/CMakeLists.txt")
 endif()
 
 include(CTest)
@@ -33,6 +43,17 @@ add_definitions(
 )
 
 include_directories(${CMAKE_SOURCE_DIR} SYSTEM ${CMAKE_SOURCE_DIR}/cen/320 ${CMAKE_SOURCE_DIR}/ext)
+
+add_library(fmt
+  STATIC
+  "${CMAKE_SOURCE_DIR}/ext/fmt/format.cc"
+  "${CMAKE_SOURCE_DIR}/ext/fmt/ostream.cc"
+  "${CMAKE_SOURCE_DIR}/ext/fmt/posix.cc"
+  "${CMAKE_SOURCE_DIR}/ext/fmt/printf.cc"
+)
+
+target_compile_options(fmt PRIVATE "/TP")
+target_compile_definitions(fmt PRIVATE "/D _MBCS")
 
 if(MSVC)
   set(CMAKE_CXX_FLAGS "/Wall /wd4710 /wd4820 /wd4668 /wd4514 /wd4355 /wd4350 /wd4640 /wd4711 /EHa /GR /fp:fast")
