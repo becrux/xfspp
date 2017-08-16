@@ -18,7 +18,8 @@ MsgWnd::MsgWnd(HINSTANCE hInstance, std::function< void (UINT, WPARAM, LPARAM) >
   _closing(false),
   _hInstance(hInstance),
   _f(f),
-  _hWnd(NULL)
+  _hWnd(NULL),
+  _lastError(0)
 {
 
 }
@@ -96,6 +97,9 @@ void MsgWnd::doClose(bool rethrow)
 
     _t->join();
     _t.reset();
+
+    if (_lastError)
+      throw Exception();
   }
   catch (...)
   {
@@ -116,11 +120,21 @@ LRESULT CALLBACK MsgWnd::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
   switch (uMsg)
   {
     case WM_NCCREATE:
-      SetLastError(0);
-      SetWindowLongPtr(hWnd,GWLP_USERDATA,reinterpret_cast< LONG_PTR >(reinterpret_cast< LPCREATESTRUCT >(lParam)->lpCreateParams));
-      if (GetLastError())
-        throw Exception();
-      break;
+      {
+        SetLastError(0);
+        LONG_PTR wndPtr = reinterpret_cast< LONG_PTR >(reinterpret_cast< LPCREATESTRUCT >(lParam)->lpCreateParams);
+        MsgWnd *me = reinterpret_cast< MsgWnd * >(wndPtr);
+        SetWindowLongPtr(hWnd,GWLP_USERDATA,wndPtr);
+        if (GetLastError() && me && !me->_lastError)
+          me->_lastError = GetLastError();
+      }
+      return TRUE;
+
+    case WM_CREATE:
+    case WM_NCCALCSIZE:
+    case WM_GETMINMAXINFO:
+    case WM_NCDESTROY:
+      return DefWindowProc(hWnd,uMsg,wParam,lParam);
 
     case WM_CLOSE:
       {
@@ -129,12 +143,15 @@ LRESULT CALLBACK MsgWnd::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
         if (me && me->_closing)
         {
           if (!DestroyWindow(hWnd))
-            throw Exception();
+          {
+            if (!me->_lastError)
+              me->_lastError = GetLastError();
+          }
 
-          return 0;
+          return FALSE;
         }
       }
-      break;
+      return TRUE;
 
     case WM_DESTROY:
       {
@@ -143,10 +160,10 @@ LRESULT CALLBACK MsgWnd::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
         if (me && me->_closing)
         {
           PostQuitMessage(0);
-          return 0;
+          return FALSE;
         }
       }
-      break;
+      return TRUE;
 
     default:
       {
@@ -155,8 +172,6 @@ LRESULT CALLBACK MsgWnd::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
         if (me && !me->_closing)
           me->_f(uMsg,wParam,lParam);
       }
-      return 0;
+      return FALSE;
   }
-
-  return DefWindowProc(hWnd,uMsg,wParam,lParam);
 }

@@ -23,7 +23,7 @@ namespace XFS
   public:
     explicit Exception(HRESULT errCode);
 	
-    const char *what() const;
+    const char *what() const noexcept;
     
     bool operator==(HRESULT errCode) const;
   };

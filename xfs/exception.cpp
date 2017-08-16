@@ -16,7 +16,7 @@ Exception::Exception(HRESULT errCode) :
 
 }
 
-const char *Exception::what() const
+const char *Exception::what() const noexcept
 {
   return "XFS::Exception";
 }

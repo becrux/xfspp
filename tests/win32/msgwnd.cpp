@@ -16,10 +16,10 @@ namespace
 {
   int (WINAPI * PrevPostMessageW)(HWND, UINT, WPARAM, LPARAM) = nullptr;
   LONG_PTR (WINAPI * PrevSetWindowLongPtrW)(HWND, int, LONG_PTR) = nullptr;
+  BOOL (WINAPI *PrevDestroyWindowPtr)(HWND) = nullptr;
 
   MOCK_API_FUNCTION(ATOM,0,RegisterClassEx,const WNDCLASSEX *)
   MOCK_API_FUNCTION(HWND,NULL,CreateWindowEx,DWORD,LPCTSTR,LPCTSTR,DWORD,int,int,int,int,HWND,HMENU,HINSTANCE,LPVOID)
-  MOCK_API_NOWIDE_FUNCTION(BOOL,FALSE,DestroyWindow,HWND)
   MOCK_API_FUNCTION(BOOL,-1,GetMessage,LPMSG,HWND,UINT,UINT)
 
   BOOL WINAPI MockPostMessageW(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -36,6 +36,15 @@ namespace
     SetLastError(ERROR_ACCESS_DENIED);
 
     return prevValue;
+  }
+
+  BOOL WINAPI MockDestroyWindow(HWND hWnd)
+  {
+    PrevDestroyWindowPtr(hWnd);
+
+    SetLastError(ERROR_ACCESS_DENIED);
+
+    return FALSE;
   }
 }
 
@@ -140,7 +149,7 @@ extern "C" int wmain(int argc, wchar_t **argv, wchar_t **)
     CREATE_HOOK(RegisterClassEx);
     CREATE_HOOK(CreateWindowEx);
     CREATE_WITH_PREV_HOOK(PostMessage,PrevPostMessage);
-    CREATE_NOWIDE_HOOK(DestroyWindow);
+    CREATE_NOWIDE_WITH_PREV_HOOK(DestroyWindow,PrevDestroyWindowPtr);
     CREATE_HOOK(GetMessage);
     CREATE_WITH_PREV_HOOK(SetWindowLongPtr,PrevSetWindowLongPtr);
 

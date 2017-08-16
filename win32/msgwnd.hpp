@@ -28,6 +28,7 @@ namespace Windows
     HINSTANCE _hInstance;
     std::function< void (UINT, WPARAM, LPARAM) > _f;
     HWND _hWnd;
+    DWORD _lastError;
     std::unique_ptr< Thread > _t;
 
     static LRESULT CALLBACK wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);

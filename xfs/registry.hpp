@@ -21,6 +21,8 @@
 #include "util/constraints.hpp"
 #include "util/string.hpp"
 
+#include "xfs/exception.hpp"
+
 namespace XFS
 {
   namespace Registry
@@ -61,7 +63,7 @@ namespace XFS
         {
           return value(sValueName);
         }
-        catch (const Exception &e)
+        catch (const XFS::Exception &e)
         {
           if (e == WFS_ERR_CFG_INVALID_NAME)
             return defaultValue;

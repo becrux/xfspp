@@ -7,7 +7,6 @@
  */
 
 #include "xfs/registry.hpp"
-#include "xfs/exception.hpp"
 #include "util/memory.hpp"
 #include "cen/320/xfsspi.h"
 
@@ -68,7 +67,7 @@ std::string Key::value(const std::string &sValueName, const std::string &default
   {
     return value(sValueName);
   }
-  catch (Exception &e)
+  catch (const XFS::Exception &e)
   {
     if (e == WFS_ERR_CFG_INVALID_NAME)
       return defaultValue;
