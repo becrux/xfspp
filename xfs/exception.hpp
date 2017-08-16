@@ -14,6 +14,16 @@
 
 #include "cen/320/xfsapi.h"
 
+#if defined(_MSC_VER)
+  #if _MSC_VER <= 1800
+    #define NOEXCEPT
+  #else
+    #define NOEXCEPT noexcept
+  #endif
+#else
+  #define NOEXCEPT noexcept
+#endif
+
 namespace XFS
 {
   class Exception : public std::exception
@@ -23,7 +33,7 @@ namespace XFS
   public:
     explicit Exception(HRESULT errCode);
 	
-    const char *what() const noexcept;
+    const char *what() const NOEXCEPT;
     
     bool operator==(HRESULT errCode) const;
   };

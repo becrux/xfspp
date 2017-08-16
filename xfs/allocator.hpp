@@ -125,7 +125,7 @@ namespace XFS
 
         T **dataPtr = reinterpret_cast< T ** >(ptr);
 
-        std::generate_n(dataPtr,N,[createItems] () { return (createItems)? reinterpret_cast< T * >(allocate(sizeof(T))) : nullptr });
+        std::generate_n(dataPtr,N,[this, createItems] () { return (createItems)? reinterpret_cast< T * >(this->allocate(sizeof(T))) : nullptr; });
 
         if (nullTerminated)
           dataPtr[N] = nullptr;
