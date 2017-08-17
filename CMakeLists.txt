@@ -40,6 +40,7 @@ add_definitions(
   -D_WIN32_WINNT=0x0600
   -DWIN32
   -D_WINDOWS
+  -D_CRT_SECURE_NO_WARNINGS
 )
 
 include_directories(${CMAKE_SOURCE_DIR} SYSTEM ${CMAKE_SOURCE_DIR}/cen/320 ${CMAKE_SOURCE_DIR}/ext)
@@ -54,11 +55,14 @@ add_library(fmt
 
 if(MSVC)
   target_compile_options(fmt PRIVATE "/TP")
-  target_compile_definitions(fmt PRIVATE "/D_MBCS")
 endif()
 
 if(MSVC)
   set(CMAKE_CXX_FLAGS "/Wall /wd4710 /wd4820 /wd4668 /wd4514 /wd4355 /wd4350 /wd4640 /wd4711 /EHa /GR /fp:fast")
+
+  if("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unused-command-line-argument")
+  endif()
   
   set(CMAKE_CXX_FLAGS_DEBUG "/Ob0 /D_DEBUG /MDd /Zi /Od /RTC1 ${CMAKE_CXX_FLAGS}")
   
