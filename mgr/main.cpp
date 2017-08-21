@@ -22,6 +22,7 @@
 #include "win32/library.hpp"
 #include "win32/msgwnd.hpp"
 #include "xfs/version.hpp"
+#include "xfs/registry.hpp"
 #include "util/memory.hpp"
 #include "util/methodscope.hpp"
 #include "util/constraints.hpp"
@@ -526,35 +527,65 @@ extern "C" HRESULT WINAPI WFSAsyncOpen(LPSTR lpszLogicalName, HAPP hApp, LPSTR l
 
       sit->reqId = 1;
 
-      HKEY key;
-      if (WFMOpenKey(
-            WFS_CFG_HKEY_USER_DEFAULT_XFS_ROOT,
-            const_cast<LPSTR>((std::string("LOGICAL_SERVICES\\") + std::string(lpszLogicalName)).c_str()),
-            &key) != WFS_SUCCESS)
+      CHAR lglProvPath[MAX_PATH];
+
       {
-        hRes = WFS_ERR_INVALID_SERVPROV;
-        return;
+        DWORD lglProvPathLength = MAX_PATH;
+        clearMem(lglProvPath);
+
+        HKEY lglKey;
+        if (WFMOpenKey(
+              WFS_CFG_HKEY_USER_DEFAULT_XFS_ROOT,
+              const_cast<LPSTR>((std::string("LOGICAL_SERVICES\\") + std::string(lpszLogicalName)).c_str()),
+              &lglKey) != WFS_SUCCESS)
+        {
+          hRes = WFS_ERR_INVALID_SERVPROV;
+          return;
+        }
+
+        MethodScope keyScope([&lglKey] () { WFMCloseKey(lglKey); });
+
+        if (WFMQueryValue(lglKey,"provider",lglProvPath,&lglProvPathLength) != WFS_SUCCESS)
+        {
+          hRes = WFS_ERR_INVALID_SERVPROV;
+          return;
+        }
       }
 
-      MethodScope keyScope([&key] () { WFMCloseKey(key); });
+      CHAR phyProvPath[MAX_PATH];
 
-      CHAR provPath[MAX_PATH];
-      DWORD provPathLength = MAX_PATH;
-
-      clearMem(provPath);
-      if (WFMQueryValue(key,"provider",provPath,&provPathLength) != WFS_SUCCESS)
       {
-        hRes = WFS_ERR_INVALID_SERVPROV;
-        return;
+        DWORD phyProvPathLength = MAX_PATH;
+        clearMem(phyProvPath);
+
+        HKEY phyKey;
+        if (WFMOpenKey(
+          WFS_CFG_HKEY_MACHINE_XFS_ROOT,
+          const_cast<LPSTR>((std::string("SERVICE_PROVIDERS\\") + std::string(lglProvPath)).c_str()),
+          &phyKey) != WFS_SUCCESS)
+        {
+          hRes = WFS_ERR_INVALID_SERVPROV;
+          return;
+        }
+
+        MethodScope keyScope([&phyKey] () { WFMCloseKey(phyKey); });
+
+        if (WFMQueryValue(phyKey,"dllname",lglProvPath,&phyProvPathLength) != WFS_SUCCESS)
+        {
+          hRes = WFS_ERR_INVALID_SERVPROV;
+          return;
+        }
       }
 
       TCHAR wProvPath[MAX_PATH];
       clearMem(wProvPath);
-      MultiByteToWideChar(CP_UTF8,MB_ERR_INVALID_CHARS | MB_PRECOMPOSED,provPath,-1,wProvPath,MAX_PATH);
+      MultiByteToWideChar(CP_UTF8,MB_ERR_INVALID_CHARS | MB_PRECOMPOSED,phyProvPath,-1,wProvPath,MAX_PATH);
 
-      sit->spLib = new Windows::Library(wProvPath);
-
-      if (!*(sit->spLib))
+      try
+      {
+        lib = sit->spLib = new Windows::Library(wProvPath);
+      }
+      catch (const Windows::Exception &e)
       {
         hRes = WFS_ERR_INVALID_SERVPROV;
         return;

@@ -32,9 +32,12 @@ namespace Windows
 
   public:
     explicit Thread(std::function< void () > f);
+    Thread(Thread &&o);
     ~Thread();
 
     void join();
+
+    Thread &operator=(Thread &&o);
   };
 }
 

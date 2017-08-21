@@ -24,3 +24,9 @@ add_library(mgrtest SHARED ${SOURCES} ${HEADERS})
 add_dependencies(mgrtest fmt)
 
 target_link_libraries(mgrtest shlwapi fmt)
+
+add_custom_command(TARGET mgrtest
+  POST_BUILD
+  COMMAND ${CMAKE_COMMAND} -E copy_if_different
+    $<TARGET_FILE:mgrtest>
+    ${OUTPUT_DIRECTORY})

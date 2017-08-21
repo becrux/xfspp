@@ -18,9 +18,10 @@
 #include "xfs/version.hpp"
 #include "sp/mgrtest/mgrtest.h"
 
-#include <unordered_map>
+#include <map>
 #include <unordered_set>
 #include <memory>
+#include <utility>
 
 namespace
 {
@@ -30,13 +31,13 @@ namespace
   {
     HWND hWnd;
     DWORD timeOut;
-    Windows::Thread thread;
+    // Windows::Thread thread;
 
     explicit Request(HWND h, DWORD t, std::function< void () > f) :
-      hWnd(h), timeOut(t), thread(f) { }
+      hWnd(h), timeOut(t)/* , thread(f) */ { }
   };
 
-  std::unordered_map< HSERVICE,std::unordered_map< REQUESTID,Request > > instances;
+  std::map< HSERVICE,std::map< REQUESTID,Request > > instances;
 
   std::shared_ptr< Windows::Library > mgrLib;
 }
@@ -139,14 +140,14 @@ HRESULT WINAPI WFPOpen(HSERVICE hService, LPSTR lpszLogicalName, HAPP hApp, LPST
     lpSrvcVersion->szSystemStatus[0] = '\0';
     lpSrvcVersion->szDescription[0] = '\0';
 
-    /*
-    instances[hService].emplace(ReqID,Request(hWnd,dwTimeOut,
-      [hWnd, dwTimeOut] ()
+    auto &inMap = instances[hService];
+    inMap.emplace(ReqID,Request(hWnd,dwTimeOut,
+      [hWnd, dwTimeOut] () -> void
         {
           SleepEx(1000,FALSE);
           PostMessage(hWnd,WFS_OPEN_COMPLETE,NULL,NULL);
         }));
-    */
+
     return WFS_SUCCESS;
   }
   catch (XFS::Exception &e)

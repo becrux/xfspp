@@ -21,11 +21,28 @@ Thread::Thread(std::function< void () > f) :
   setHandle(CreateThread(NULL,0,threadProc,reinterpret_cast< LPVOID >(this),0,NULL));
 }
 
+Thread::Thread(Thread &&o) :
+  Handle<>(std::move(o)),
+  _joined(o._joined),
+  _f(std::move(o._f))
+{
+
+}
+
 Thread::~Thread()
 {
   ::Log::Method m(__SIGNATURE__);
 
   doJoin(false);
+}
+
+Thread &Thread::operator=(Thread &&o)
+{
+  Handle<>::operator=(std::move(o));
+  _joined = o._joined;
+  _f = std::move(o._f);
+
+  return *this;
 }
 
 void Thread::doJoin(bool rethrow)
