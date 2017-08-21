@@ -16,6 +16,7 @@
 
 #include "win32/handle.hpp"
 #include "util/constraints.hpp"
+#include "util/noexcept.hpp"
 
 namespace Windows
 {
@@ -66,40 +67,63 @@ namespace Windows
     template< typename T >
     class Locker
     {
+      bool _ok;
       T &_ref;
 
       Locker(const Locker &);
       Locker &operator=(const Locker &);
 
     public:
-      explicit Locker(T &ref) : _ref(ref) { _ref.lock(); }
-      ~Locker() { _ref.unlock(); }
+      explicit Locker(T &ref) : _ok(false), _ref(ref)
+      {
+        _ref.lock();
+        _ok = true;
+      }
+
+      ~Locker() NOEXCEPT(false)
+      {
+        if (_ok)
+          _ref.unlock();
+      }
     };
 
     template<>
     class Locker< HANDLE >
     {
+      bool _ok;
       HANDLE _ref;
 
       NON_COPYABLE(Locker);
 
     public:
-      explicit Locker(HANDLE ref) : _ref(ref) { WaitForSingleObjectEx(_ref,INFINITE,FALSE); }
+      explicit Locker(HANDLE ref) : _ok(false), _ref(ref)
+      {
+        if (WaitForSingleObjectEx(_ref,INFINITE,FALSE) == WAIT_FAILED)
+          throw Exception();
+
+        _ok = true;
+      }
+
       Locker(Locker &&o) :
-        _ref(o._ref)
+        _ref(o._ref),
+        _ok(o._ok)
       {
         o._ref = NULL;
       }
 
-      ~Locker()
+      ~Locker() NOEXCEPT(false)
       {
-        if (_ref != NULL)
-          ReleaseMutex(_ref);
+        if ((_ref != NULL) && _ok)
+        {
+          if (!ReleaseMutex(_ref))
+            throw Exception();
+        }
       }
 
       Locker &operator=(Locker &&o)
       {
         _ref = o._ref;
+        _ok = o._ok;
         o._ref = NULL;
 
         return *this;
