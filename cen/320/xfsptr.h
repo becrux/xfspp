@@ -600,7 +600,8 @@ typedef struct _wfs_ptr_caps
     WORD                 fwCoercivityType;
     WORD                 fwControlPassbook;
     WORD                 wPrintSides;
-    BOOL                 bAntiFraudModule; } WFSPTRCAPS, *LPWFSPTRCAPS;
+    BOOL                 bAntiFraudModule;
+} WFSPTRCAPS, *LPWFSPTRCAPS;
 
 typedef struct _wfs_frm_header
 {

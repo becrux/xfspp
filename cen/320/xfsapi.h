@@ -272,7 +272,7 @@ HRESULT extern WINAPI WFSCancelAsyncRequest ( HSERVICE hService, REQUESTID Reque
 
 HRESULT extern WINAPI WFSCancelBlockingCall ( DWORD dwThreadID);
 
-HRESULT extern WINAPI WFSCleanUp ();
+HRESULT extern WINAPI WFSCleanUp ( void);
 
 HRESULT extern WINAPI WFSClose ( HSERVICE hService);
 
@@ -296,7 +296,7 @@ HRESULT extern WINAPI WFSGetInfo ( HSERVICE hService, DWORD dwCategory, LPVOID l
 
 HRESULT extern WINAPI WFSAsyncGetInfo ( HSERVICE hService, DWORD dwCategory, LPVOID lpQueryDetails, DWORD dwTimeOut, HWND hWnd, LPREQUESTID lpRequestID);
 
-BOOL extern WINAPI WFSIsBlocking ();
+BOOL extern WINAPI WFSIsBlocking ( void);
 
 HRESULT extern WINAPI WFSLock ( HSERVICE hService, DWORD dwTimeOut, LPWFSRESULT * lppResult);
 
@@ -314,7 +314,7 @@ HRESULT extern WINAPI WFSSetBlockingHook ( XFSBLOCKINGHOOK lpBlockFunc, LPXFSBLO
 
 HRESULT extern WINAPI WFSStartUp ( DWORD dwVersionsRequired, LPWFSVERSION lpWFSVersion);
 
-HRESULT extern WINAPI WFSUnhookBlockingHook ();
+HRESULT extern WINAPI WFSUnhookBlockingHook ( void);
 
 HRESULT extern WINAPI WFSUnlock ( HSERVICE hService);
 
