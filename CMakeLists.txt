@@ -16,7 +16,7 @@ endif()
 
 if(NOT EXISTS ${CMAKE_SOURCE_DIR}/ext/catch)
   message(STATUS "Downloading latest Catch release ...")
-  file(DOWNLOAD https://github.com/philsquared/Catch/releases/download/v1.9.6/catch.hpp ${CMAKE_SOURCE_DIR}/ext/catch/catch.hpp)
+  file(DOWNLOAD https://github.com/philsquared/Catch/releases/download/v1.12.2/catch.hpp ${CMAKE_SOURCE_DIR}/ext/catch/catch.hpp)
 endif()
 
 if(NOT EXISTS ${CMAKE_SOURCE_DIR}/ext/fmt)
