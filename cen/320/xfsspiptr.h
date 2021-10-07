@@ -24,9 +24,8 @@ typedef HRESULT (WINAPI * WFPLockFunc)(HSERVICE hService, DWORD dwTimeOut, HWND 
 typedef HRESULT (WINAPI * WFPOpenFunc)(HSERVICE hService, LPSTR lpszLogicalName, HAPP hApp, LPSTR lpszAppID, DWORD dwTraceLevel, DWORD dwTimeOut, HWND hWnd, REQUESTID ReqID, HPROVIDER hProvider, DWORD dwSPIVersionsRequired, LPWFSVERSION lpSPIVersion, DWORD dwSrvcVersionsRequired, LPWFSVERSION lpSrvcVersion);
 typedef HRESULT (WINAPI * WFPRegisterFunc)(HSERVICE hService, DWORD dwEventClass, HWND hWndReg, HWND hWnd, REQUESTID ReqID);
 typedef HRESULT (WINAPI * WFPSetTraceLevelFunc)(HSERVICE hService, DWORD dwTraceLevel);
-typedef HRESULT (WINAPI * WFPUnloadServiceFunc)();
+typedef HRESULT (WINAPI * WFPUnloadServiceFunc)(void);
 typedef HRESULT (WINAPI * WFPUnlockFunc)(HSERVICE hService, HWND hWnd, REQUESTID ReqID);
-
 
 /*   restore alignment   */
 #pragma pack(pop)
