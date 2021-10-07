@@ -14,8 +14,8 @@
 using namespace XFS;
 
 Version::Version(WORD wVersion) :
-  _major(static_cast< WORD >(wVersion & 0xff)),
-  _minor(static_cast< WORD >((wVersion >> 8) & 0xff))
+  _major(static_cast<BYTE>(wVersion & 0xff)),
+  _minor(static_cast<BYTE>(wVersion >> 8))
 {
 
 }
@@ -29,15 +29,15 @@ Version::Version(BYTE bMajor, BYTE bMinor) :
 
 WORD Version::value() const
 {
-  return static_cast< WORD >((minor() << 8) | major());
+  return static_cast<WORD>((static_cast<WORD>(minor()) << 8) | static_cast<WORD>(major()));
 }
 
-WORD Version::major() const
+BYTE Version::major() const
 {
   return _major;
 }
 
-WORD Version::minor() const
+BYTE Version::minor() const
 {
   return _minor;
 }
@@ -70,8 +70,8 @@ std::ostream &XFS::operator<<(std::ostream &out, const Version &v)
 }
 
 VersionRange::VersionRange(DWORD dwVersion) :
-  _start(dwVersion >> 16),
-  _end(dwVersion & 0xffff)
+  _start(static_cast<WORD>(dwVersion >> 16)),
+  _end(static_cast<WORD>(dwVersion & 0xffff))
 {
 
 }

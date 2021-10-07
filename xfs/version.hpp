@@ -21,8 +21,8 @@ namespace XFS
 {
   class Version : private Comparable< Version >
   {
-    WORD _major;
-    WORD _minor;
+    BYTE _major;
+    BYTE _minor;
 
   public:
     explicit Version(WORD wVersion);
@@ -30,8 +30,8 @@ namespace XFS
 
     WORD value() const;
 
-    WORD major() const;
-    WORD minor() const;
+    BYTE major() const;
+    BYTE minor() const;
 
     static Version min(BYTE bMajor);
     static Version max(BYTE bMajor);
