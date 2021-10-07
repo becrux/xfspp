@@ -9,23 +9,23 @@ execute_process(COMMAND ${CMAKE_COMMAND} "-E" "make_directory" "${CMAKE_SOURCE_D
 
 if(NOT EXISTS ${CMAKE_SOURCE_DIR}/ext/sqlite)
   message(STATUS "Downloading latest SQLite release ...")
-  file(DOWNLOAD http://sqlite.org/2017/sqlite-amalgamation-3190200.zip ${CMAKE_BINARY_DIR}/sqlite.zip)
+  file(DOWNLOAD https://sqlite.org/2021/sqlite-amalgamation-3360000.zip ${CMAKE_BINARY_DIR}/sqlite.zip)
   execute_process(COMMAND ${CMAKE_COMMAND} "-E" "tar" "xvf" "${CMAKE_BINARY_DIR}/sqlite.zip" WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/ext)
-  execute_process(COMMAND ${CMAKE_COMMAND} "-E" "rename" "sqlite-amalgamation-3190200" "sqlite" WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/ext)
+  execute_process(COMMAND ${CMAKE_COMMAND} "-E" "rename" "sqlite-amalgamation-3360000" "sqlite" WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/ext)
 endif()
 
 if(NOT EXISTS ${CMAKE_SOURCE_DIR}/ext/catch)
   message(STATUS "Downloading latest Catch release ...")
-  file(DOWNLOAD https://github.com/philsquared/Catch/releases/download/v1.9.6/catch.hpp ${CMAKE_SOURCE_DIR}/ext/catch/catch.hpp)
+  file(DOWNLOAD https://github.com/philsquared/Catch/releases/download/v1.12.2/catch.hpp ${CMAKE_SOURCE_DIR}/ext/catch/catch.hpp)
 endif()
 
 if(NOT EXISTS ${CMAKE_SOURCE_DIR}/ext/fmt)
   message(STATUS "Downloading latest fmt release ...")
   execute_process(COMMAND ${CMAKE_COMMAND} "-E" "make_directory" "${CMAKE_BINARY_DIR}/temp")
-  file(DOWNLOAD https://github.com/fmtlib/fmt/archive/4.0.0.zip ${CMAKE_BINARY_DIR}/fmt.zip)
+  file(DOWNLOAD https://github.com/fmtlib/fmt/archive/4.1.0.zip ${CMAKE_BINARY_DIR}/fmt.zip)
   execute_process(COMMAND ${CMAKE_COMMAND} "-E" "tar" "xvf" "${CMAKE_BINARY_DIR}/fmt.zip" WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/temp)
   execute_process(COMMAND ${CMAKE_COMMAND} "-E" "make_directory" "${CMAKE_SOURCE_DIR}/ext/fmt")
-  execute_process(COMMAND ${CMAKE_COMMAND} "-E" "copy_directory" "${CMAKE_BINARY_DIR}/temp/fmt-4.0.0/fmt" ${CMAKE_SOURCE_DIR}/ext/fmt)
+  execute_process(COMMAND ${CMAKE_COMMAND} "-E" "copy_directory" "${CMAKE_BINARY_DIR}/temp/fmt-4.1.0/fmt" ${CMAKE_SOURCE_DIR}/ext/fmt)
   execute_process(COMMAND ${CMAKE_COMMAND} "-E" "remove" "-f" "${CMAKE_SOURCE_DIR}/ext/fmt/CMakeLists.txt")
 endif()
 
