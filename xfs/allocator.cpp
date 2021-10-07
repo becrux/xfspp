@@ -12,8 +12,8 @@
 #include "xfs/allocator.hpp"
 #include "xfs/exception.hpp"
 #include "util/string.hpp"
-#include "cen/320/xfsapi.h"
-#include "cen/320/xfsadmin.h"
+#include "cen/330/xfsapi.h"
+#include "cen/330/xfsadmin.h"
 
 using namespace XFS;
 

@@ -8,7 +8,7 @@
 
 #include "xfs/registry.hpp"
 #include "util/memory.hpp"
-#include "cen/320/xfsspi.h"
+#include "cen/330/xfsspi.h"
 
 using namespace XFS::Registry;
 
