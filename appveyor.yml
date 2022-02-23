@@ -70,6 +70,22 @@ environment:
       PLATFORM: MSVC
       CONFIG: Release
 
+    - GENERATOR: "Visual Studio 17 2022"
+      PLATFORM: MSVC
+      CONFIG: Debug
+
+    - GENERATOR: "Visual Studio 17 2022"
+      PLATFORM: MSVC
+      CONFIG: Release
+
+    - GENERATOR: "Visual Studio 17 2022 Win64"
+      PLATFORM: MSVC
+      CONFIG: Debug
+
+    - GENERATOR: "Visual Studio 17 2022 Win64"
+      PLATFORM: MSVC
+      CONFIG: Release
+
     - GENERATOR: "MinGW Makefiles"
       PLATFORM: MinGW-w64
       CONFIG: Debug
